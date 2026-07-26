@@ -2,6 +2,7 @@ import React from "react";
 import AddPage from "@/components/AddPage";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useGet } from "@/hooks/useGet";
 import {
     Select,
     SelectContent,
@@ -11,7 +12,36 @@ import {
 } from "@/components/ui/select";
 import { Controller } from "react-hook-form";
 
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils"; 
+import { Check, ChevronsUpDown } from "lucide-react";
+// 💡 1. دالة مساعدة لتحويل الملف إلى Base64
+const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+    });
+};
+
 const SalesManAdd = () => {
+    const { data: listsResponse, loading: isLoadingLists } = useGet("/api/admin/sales/lists");
+    const leadersList = listsResponse?.data?.leaders || listsResponse?.leaders || [];
+
     return (
         <AddPage
             title="Add Sales"
@@ -21,23 +51,21 @@ const SalesManAdd = () => {
                 email: "",
                 phone: "",
                 password: "",
-                image: "",
+                imageBase64: "", // 💡 حقل جديد لتخزين الصورة كنص
                 status: "active",
+                leader_id: null, // يمكنك تعديل هذا حسب الحاجة
             }}
-            // 💡 تحويل البيانات إلى FormData لإرسال الملف الحقيقي للباك إند
+            // 💡 2. إرسال البيانات كـ Object عادي (JSON) بدلاً من FormData
             transformPayload={(data) => {
-                const formData = new FormData();
-                formData.append("name", data.name || "");
-                formData.append("email", data.email || "");
-                formData.append("phone", data.phone || "");
-                formData.append("password", data.password || "");
-                formData.append("status", data.status || "active");
-
-                if (data.image?.[0]) {
-                    formData.append("image", data.image[0]);
-                }
-
-                return formData;
+                return {
+                    name: data.name,
+                    email: data.email,
+                    phone: data.phone,
+                    password: data.password,
+                    status: data.status,
+                    image: data.imageBase64 || "", // نرسل الـ Base64 إلى الباك إند
+                    leader_id: data.leader_id,
+                };
             }}
             onSuccessAction={() => window.history.back()}
         >
@@ -45,6 +73,7 @@ const SalesManAdd = () => {
                 const {
                     register,
                     control,
+                    setValue, // 💡 نستخرج setValue لربط الـ Base64 بالـ Form
                     formState: { errors },
                 } = methods;
 
@@ -155,14 +184,94 @@ const SalesManAdd = () => {
                                     />
                                 </div>
 
+
+                                {/* 4. Leaders Search Select */}
+                                <div className="space-y-2 flex flex-col w-full">
+                                <Label className="text-sm font-medium">Leaders *</Label>
+                                <Controller
+                                    name="leader_id"
+                                    control={control}
+                                    rules={{ required: true }}
+                                    render={({ field }) => (
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            className={cn(
+                                            "w-full justify-between font-normal text-left h-10 px-3 text-sm rounded-md",
+                                            !field.value && "text-muted-foreground",
+                                            )}
+                                        >
+                                            {field.value
+                                            ? leadersList.find((l) => l.id === field.value)?.name
+                                            : "Select Leader"}
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent
+                                        className="w-[var(--radix-popover-trigger-width)] p-0"
+                                        align="start"
+                                        >
+                                        <Command className="text-sm">
+                                            <CommandInput
+                                            placeholder="Search leaders..."
+                                            className="h-9 text-sm"
+                                            />
+                                            <CommandList>
+                                            <CommandEmpty className="p-2 text-sm text-center text-gray-500">
+                                                No results found.
+                                            </CommandEmpty>
+                                            <CommandGroup>
+                                                {leadersList.map((s) => (
+                                                <CommandItem
+                                                    key={s.id}
+                                                    value={s.name}
+                                                    className="text-sm py-1.5 px-2 cursor-pointer"
+                                                    onSelect={() => field.onChange(s.id)}
+                                                >
+                                                    <Check
+                                                    className={cn(
+                                                        "mr-2 h-4 w-4",
+                                                        s.id === field.value
+                                                        ? "opacity-100"
+                                                        : "opacity-0",
+                                                    )}
+                                                    />
+                                                    {s.name}
+                                                </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                        </PopoverContent>
+                                    </Popover>
+                                    )}
+                                />
+                                {errors.sales_id && (
+                                    <span className="text-xs text-red-500">
+                                    Sales field is required
+                                    </span>
+                                )}
+                                </div>
+
                                 {/* 6. Image Field */}
                                 <div className="space-y-2">
                                     <Label className="text-sm font-medium">Image</Label>
                                     <Input
                                         type="file"
                                         accept="image/*"
-                                        {...register("image")}
                                         className="h-10 text-sm rounded-md cursor-pointer"
+                                        // 💡 3. تحويل الصورة إلى Base64 وحفظها عند الاختيار مباشرة
+                                        onChange={async (e) => {
+                                            const file = e.target.files[0];
+                                            if (file) {
+                                                const base64 = await fileToBase64(file);
+                                                setValue("imageBase64", base64);
+                                            } else {
+                                                setValue("imageBase64", ""); // مسح القيمة لو ألغى الاختيار
+                                            }
+                                        }}
                                     />
                                 </div>
                             </div>
