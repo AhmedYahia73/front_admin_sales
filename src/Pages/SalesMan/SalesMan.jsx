@@ -2,6 +2,10 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DataTable } from "@/components/DataTable";
 import { useGet } from "@/hooks/useGet";
+import { useMutation } from "@/hooks/useMutation";
+import { DeleteDialog } from "@/components/DeleteDialog";
+// استخدام sonner بناءً على طلبك
+import { toast } from "sonner"; 
 
 const formatDate = (dateString) => {
     if (!dateString) return "-";
@@ -22,7 +26,6 @@ const SalesMan = () => {
     const [selectedSalesFilter, setSelectedSalesFilter] = useState("");
 
     // ---- Get Sales Data ----
-    // ⚠️ غيري اسم الـ key (مثلاً sales_id أو leader_id أو id) حسب ما يطلبه الباك إند ف الـ Query
     const salesApiUrl = selectedSalesFilter
         ? `/api/admin/sales?sales_id=${selectedSalesFilter}`
         : "/api/admin/sales";
@@ -30,9 +33,36 @@ const SalesMan = () => {
     const { data: response, loading: isLoading, refresh } = useGet(salesApiUrl);
     const sales = response?.data?.sales || [];
 
+    const [salesToDelete, setSalesToDelete] = useState(null);
+    
     // ---- Get Lists for Filter ----
     const { data: listsResponse } = useGet("/api/admin/sales/lists");
     const salesList = listsResponse?.leaders || listsResponse?.data?.leaders || [];
+
+    const { mutate: deleteSales, loading: isDeleting } = useMutation();
+
+    // ---- 2. دالة الحذف (Delete) ----
+    const handleDeleteClick = (row) => {
+        setSalesToDelete(row);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!salesToDelete) return;
+
+        const result = await deleteSales({
+            method: "DELETE",
+            url: `/api/admin/sales/${salesToDelete.id}`,
+            showToast: false,
+        });
+
+        if (result.success) {
+            toast.success("Sales deleted successfully"); // sonner هتشتغل هنا تمام
+            setSalesToDelete(null);
+            refresh?.();
+        } else {
+            toast.error("Failed to delete sales"); // وهنا كمان
+        }
+    };
 
     // ---- Table Columns definition ----
     const columns = [
@@ -88,10 +118,19 @@ const SalesMan = () => {
             <DataTable
                 title="Sales Management"
                 onAdd={() => navigate("/sales-man/add")}
-                showActions={false}
+                showActions={true} 
                 columns={columns}
                 data={sales}
                 isLoading={isLoading}
+                onEdit={(row) => navigate(`/sales-man/${row.id}/edit`, { state: { rowData: row } })}
+                onDelete={handleDeleteClick}
+            />
+            
+            <DeleteDialog
+                isOpen={!!salesToDelete}
+                onClose={() => setSalesToDelete(null)}
+                onConfirm={handleDeleteConfirm}
+                loading={isDeleting}
             />
         </div>
     );

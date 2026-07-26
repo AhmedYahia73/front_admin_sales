@@ -1,4 +1,5 @@
 import React from "react";
+import { useParams } from "react-router-dom"; // 💡 استيراد useParams
 import AddPage from "@/components/AddPage";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,22 +14,23 @@ import {
 import { Controller } from "react-hook-form";
 
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
 } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils"; 
-import { Check, ChevronsUpDown } from "lucide-react";
-// 💡 1. دالة مساعدة لتحويل الملف إلى Base64
+import { cn } from "@/lib/utils";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react"; // 💡 استيراد Loader2
+
+// 💡 دالة مساعدة لتحويل الملف إلى Base64
 const fileToBase64 = (file) => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -39,33 +41,87 @@ const fileToBase64 = (file) => {
 };
 
 const SalesManAdd = () => {
+    // 💡 1. نقلنا كل الـ Hooks دي جوه الـ Component
+    const { id } = useParams();
+
+    // جلب قائمة القادة (Leaders)
     const { data: listsResponse, loading: isLoadingLists } = useGet("/api/admin/sales/lists");
     const leadersList = listsResponse?.data?.leaders || listsResponse?.leaders || [];
 
+    // جلب بيانات المندوب في حالة التعديل (لو فيه ID)
+    const { data: response, loading: isLoadingData } = useGet(
+        id ? `/api/admin/sales/${id}` : null,
+        Boolean(id)
+    );
+
+    // استخراج بيانات المندوب من الاستجابة
+    const fetchedSales =
+        response?.data?.sales?.[0] ||
+        response?.sales?.[0] ||
+        response?.data?.sales ||
+        response;
+
+    // 💡 2. إظهار شاشة تحميل لو احنا في وضع التعديل والداتا لسه بتيجي
+    if (id && isLoadingData) {
+        return (
+            <div className="flex justify-center items-center min-h-[300px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
     return (
         <AddPage
-            title="Add Sales"
-            apiUrl="/api/admin/sales"
-            initialData={{
-                name: "",
-                email: "",
-                phone: "",
-                password: "",
-                imageBase64: "", // 💡 حقل جديد لتخزين الصورة كنص
-                status: "active",
-                leader_id: null, // يمكنك تعديل هذا حسب الحاجة
-            }}
-            // 💡 2. إرسال البيانات كـ Object عادي (JSON) بدلاً من FormData
+            title={id ? "Edit Sales" : "Add Sales"} // تغيير العنوان ديناميكياً
+            apiUrl= "/api/admin/sales" // 💡 تغيير الرابط حسب حالة الإضافة أو التعديل
+            // method={id ? "PUT" : "POST"} // 💡 لو الـ AddPage عندك بتدعم الـ method ضيف السطر ده
+            
+            method={id ? "PUT" : "POST"}
+            initialData={
+                id && fetchedSales
+                    ? {
+                          // لو فيه داتا جاية من الباك إند نركبها هنا
+                          id: fetchedSales.id || "",
+                          name: fetchedSales.name || "",
+                          email: fetchedSales.email || "",
+                          phone: fetchedSales.phone || "",
+                          password: "", // الباسورد بيفضل فاضي في التعديل
+                          imageBase64: "", 
+                          status: fetchedSales.status || "active",
+                          leader_id: fetchedSales.leader_id || null,
+                      }
+                    : {
+                          // لو إضافة جديدة دي القيم الافتراضية
+                          id: "",
+                          name: "",
+                          email: "",
+                          phone: "",
+                          password: "",
+                          imageBase64: "",
+                          status: "active",
+                          leader_id: null,
+                      }
+            }
             transformPayload={(data) => {
-                return {
+                const payload = {
                     name: data.name,
                     email: data.email,
                     phone: data.phone,
-                    password: data.password,
                     status: data.status,
-                    image: data.imageBase64 || "", // نرسل الـ Base64 إلى الباك إند
                     leader_id: data.leader_id,
                 };
+
+                // إرسال كلمة المرور فقط في حالة كتابتها
+                if (data.password) {
+                    payload.password = data.password;
+                }
+
+                // إرسال الصورة كـ Base64 (النص) في الـ Body
+                if (data.imageBase64) {
+                    payload.image = data.imageBase64;
+                }
+                
+                return payload;
             }}
             onSuccessAction={() => window.history.back()}
         >
@@ -73,7 +129,7 @@ const SalesManAdd = () => {
                 const {
                     register,
                     control,
-                    setValue, // 💡 نستخرج setValue لربط الـ Base64 بالـ Form
+                    setValue,
                     formState: { errors },
                 } = methods;
 
@@ -140,17 +196,20 @@ const SalesManAdd = () => {
 
                                 {/* 4. Password Field */}
                                 <div className="space-y-2">
-                                    <Label className="text-sm font-medium">Password *</Label>
+                                    <Label className="text-sm font-medium">
+                                        Password {id ? "(Leave empty to keep current)" : "*"}
+                                    </Label>
                                     <Input
                                         type="password"
                                         {...register("password", {
-                                            required: "Password is required",
+                                            // 💡 الباسورد إجباري فقط في حالة الإضافة (id مش موجود)
+                                            required: id ? false : "Password is required",
                                             minLength: {
                                                 value: 6,
                                                 message: "Password must be at least 6 characters",
                                             },
                                         })}
-                                        placeholder="Enter secret password (min. 6 characters)"
+                                        placeholder={id ? "Enter new password (optional)" : "Enter secret password"}
                                         className="h-10 text-sm rounded-md"
                                     />
                                     {errors.password && (
@@ -166,7 +225,6 @@ const SalesManAdd = () => {
                                     <Controller
                                         name="status"
                                         control={control}
-                                        defaultValue="active"
                                         render={({ field }) => (
                                             <Select
                                                 onValueChange={field.onChange}
@@ -184,85 +242,83 @@ const SalesManAdd = () => {
                                     />
                                 </div>
 
-
-                                {/* 4. Leaders Search Select */}
+                                {/* 6. Leaders Search Select */}
                                 <div className="space-y-2 flex flex-col w-full">
-                                <Label className="text-sm font-medium">Leaders *</Label>
-                                <Controller
-                                    name="leader_id"
-                                    control={control}
-                                    rules={{ required: true }}
-                                    render={({ field }) => (
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            role="combobox"
-                                            className={cn(
-                                            "w-full justify-between font-normal text-left h-10 px-3 text-sm rounded-md",
-                                            !field.value && "text-muted-foreground",
-                                            )}
-                                        >
-                                            {field.value
-                                            ? leadersList.find((l) => l.id === field.value)?.name
-                                            : "Select Leader"}
-                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                        </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent
-                                        className="w-[var(--radix-popover-trigger-width)] p-0"
-                                        align="start"
-                                        >
-                                        <Command className="text-sm">
-                                            <CommandInput
-                                            placeholder="Search leaders..."
-                                            className="h-9 text-sm"
-                                            />
-                                            <CommandList>
-                                            <CommandEmpty className="p-2 text-sm text-center text-gray-500">
-                                                No results found.
-                                            </CommandEmpty>
-                                            <CommandGroup>
-                                                {leadersList.map((s) => (
-                                                <CommandItem
-                                                    key={s.id}
-                                                    value={s.name}
-                                                    className="text-sm py-1.5 px-2 cursor-pointer"
-                                                    onSelect={() => field.onChange(s.id)}
+                                    <Label className="text-sm font-medium">Leaders *</Label>
+                                    <Controller
+                                        name="leader_id"
+                                        control={control}
+                                        rules={{ required: "Leader is required" }}
+                                        render={({ field }) => (
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <Button
+                                                        variant="outline"
+                                                        role="combobox"
+                                                        className={cn(
+                                                            "w-full justify-between font-normal text-left h-10 px-3 text-sm rounded-md",
+                                                            !field.value && "text-muted-foreground"
+                                                        )}
+                                                    >
+                                                        {field.value
+                                                            ? leadersList.find((l) => l.id == field.value)?.name
+                                                            : "Select Leader"}
+                                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent
+                                                    className="w-[var(--radix-popover-trigger-width)] p-0"
+                                                    align="start"
                                                 >
-                                                    <Check
-                                                    className={cn(
-                                                        "mr-2 h-4 w-4",
-                                                        s.id === field.value
-                                                        ? "opacity-100"
-                                                        : "opacity-0",
-                                                    )}
-                                                    />
-                                                    {s.name}
-                                                </CommandItem>
-                                                ))}
-                                            </CommandGroup>
-                                            </CommandList>
-                                        </Command>
-                                        </PopoverContent>
-                                    </Popover>
+                                                    <Command className="text-sm">
+                                                        <CommandInput
+                                                            placeholder="Search leaders..."
+                                                            className="h-9 text-sm"
+                                                        />
+                                                        <CommandList>
+                                                            <CommandEmpty className="p-2 text-sm text-center text-gray-500">
+                                                                No results found.
+                                                            </CommandEmpty>
+                                                            <CommandGroup>
+                                                                {leadersList.map((s) => (
+                                                                    <CommandItem
+                                                                        key={s.id}
+                                                                        value={s.name}
+                                                                        className="text-sm py-1.5 px-2 cursor-pointer"
+                                                                        onSelect={() => field.onChange(s.id)}
+                                                                    >
+                                                                        <Check
+                                                                            className={cn(
+                                                                                "mr-2 h-4 w-4",
+                                                                                s.id == field.value
+                                                                                    ? "opacity-100"
+                                                                                    : "opacity-0"
+                                                                            )}
+                                                                        />
+                                                                        {s.name}
+                                                                    </CommandItem>
+                                                                ))}
+                                                            </CommandGroup>
+                                                        </CommandList>
+                                                    </Command>
+                                                </PopoverContent>
+                                            </Popover>
+                                        )}
+                                    />
+                                    {errors.leader_id && (
+                                        <span className="text-xs text-red-500">
+                                            {errors.leader_id.message}
+                                        </span>
                                     )}
-                                />
-                                {errors.sales_id && (
-                                    <span className="text-xs text-red-500">
-                                    Sales field is required
-                                    </span>
-                                )}
                                 </div>
 
-                                {/* 6. Image Field */}
+                                {/* 7. Image Field */}
                                 <div className="space-y-2">
-                                    <Label className="text-sm font-medium">Image</Label>
+                                    <Label className="text-sm font-medium">Image {id && "(Leave empty to keep current)"}</Label>
                                     <Input
                                         type="file"
                                         accept="image/*"
                                         className="h-10 text-sm rounded-md cursor-pointer"
-                                        // 💡 3. تحويل الصورة إلى Base64 وحفظها عند الاختيار مباشرة
                                         onChange={async (e) => {
                                             const file = e.target.files[0];
                                             if (file) {
