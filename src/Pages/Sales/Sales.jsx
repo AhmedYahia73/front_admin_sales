@@ -38,19 +38,33 @@ const formatDate = (dateString) => {
 const Visits = () => {
     const navigate = useNavigate();
 
-    // ---- Filter State ----
+    // ---- Filter & Pagination States ----
     const [selectedSalesFilter, setSelectedSalesFilter] = useState("");
+    const [page, setPage] = useState(1);
 
-    // ---- Notes State (FIX 1: إضافته هنا بدلاً من نسيه) ----
+    // ---- Notes State ----
     const [selectedNotes, setSelectedNotes] = useState(null);
 
-    // ⚠️ غيري اسم الـ key (مثلاً sales_id أو leader_id أو id) حسب ما يطلبه الباك إند ف الـ Query
-    const salesApiUrl = selectedSalesFilter
-        ? `/api/admin/visits/sales?sales_id=${selectedSalesFilter}`
-        : "/api/admin/visits/sales";
+    // ---- Get Visits Data (Dynamic based on filter & page) ----
+    const queryParams = new URLSearchParams();
+    queryParams.append("page", page);
+    if (selectedSalesFilter) {
+        queryParams.append("sales_id", selectedSalesFilter);
+    }
+
+    const salesApiUrl = `/api/admin/visits/sales?${queryParams.toString()}`;
 
     const { data: response, loading: isLoading, refresh } = useGet(salesApiUrl);
     const visits = response?.data?.allVisits || [];
+    
+    // استخراج بيانات الـ Pagination من الـ Response المخصص لديك
+    const paginationData = response?.data?.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 };
+
+    // إعادة تعيين الصفحة إلى 1 عند تغيير الفلتر
+    const handleFilterChange = (e) => {
+        setSelectedSalesFilter(e.target.value);
+        setPage(1);
+    };
 
     // ---- Get Status & Sales Lists ----
     const { data: listsResponse } = useGet("/api/admin/visits/lists");
@@ -273,7 +287,7 @@ const Visits = () => {
                     id="sales-filter"
                     className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[200px]"
                     value={selectedSalesFilter}
-                    onChange={(e) => setSelectedSalesFilter(e.target.value)}
+                    onChange={handleFilterChange}
                 >
                     <option value="">All Sales (Show All)</option>
                     {salesList.map((s) => (
@@ -293,6 +307,32 @@ const Visits = () => {
                 data={visits}
                 isLoading={isLoading}
             />
+
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between mt-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <div className="text-sm text-gray-600">
+                    Showing page <span className="font-semibold">{paginationData.page}</span> of{" "}
+                    <span className="font-semibold">{paginationData.totalPages}</span> (Total: {paginationData.total})
+                </div>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((old) => Math.max(old - 1, 1))}
+                        disabled={page === 1}
+                    >
+                        Previous
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((old) => Math.min(old + 1, paginationData.totalPages))}
+                        disabled={page >= paginationData.totalPages}
+                    >
+                        Next
+                    </Button>
+                </div>
+            </div>
 
             {/* Delete Dialog */}
             <DeleteDialog

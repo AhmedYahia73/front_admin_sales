@@ -4,6 +4,7 @@ import { DataTable } from "@/components/DataTable";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { useGet } from "@/hooks/useGet";
 import { useMutation } from "@/hooks/useMutation";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 const formatDate = (dateString) => {
@@ -21,17 +22,30 @@ const formatDate = (dateString) => {
 const Leader = () => {
     const navigate = useNavigate();
 
-    // ---- Filter State ----
+    // ---- Filter & Pagination States ----
     const [selectedleaderFilter, setSelectedleaderFilter] = useState("");
+    const [page, setPage] = useState(1);
 
-    // ---- Get leader Data ----
-    // ⚠️ غيري اسم الـ key (مثلاً leader_id أو leader_id أو id) حسب ما يطلبه الباك إند ف الـ Query
-    const leaderApiUrl = selectedleaderFilter
-        ? `/api/admin/leader?target_id=${selectedleaderFilter}`
-        : "/api/admin/leader";
+    // ---- Get leader Data (Dynamic based on filter & page) ----
+    const queryParams = new URLSearchParams();
+    queryParams.append("page", page);
+    if (selectedleaderFilter) {
+        queryParams.append("target_id", selectedleaderFilter);
+    }
+
+    const leaderApiUrl = `/api/admin/leader?${queryParams.toString()}`;
 
     const { data: response, loading: isLoading, refresh } = useGet(leaderApiUrl);
     const leader = response?.data?.leaders || [];
+    
+    // استخراج بيانات الـ Pagination من الـ Response
+    const paginationData = response?.data?.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 };
+
+    // إعادة تعيين الصفحة إلى 1 عند تغيير الفلتر
+    const handleFilterChange = (e) => {
+        setSelectedleaderFilter(e.target.value);
+        setPage(1);
+    };
 
     // ---- Get Lists for Filter ----
     const { data: listsResponse } = useGet("/api/admin/leader/lists");
@@ -77,10 +91,11 @@ const Leader = () => {
             accessorKey: "status",
             header: "Status",
             render: (row) => (
-                <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${row.status === "active"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-gray-100 text-gray-800"
-                    }`}>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
+                    row.status === "active"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-gray-100 text-gray-800"
+                }`}>
                     {row.status || "-"}
                 </span>
             ),
@@ -92,13 +107,13 @@ const Leader = () => {
             {/* leader Filter Section */}
             <div className="mb-4 flex items-center gap-3 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                 <label htmlFor="leader-filter" className="text-sm font-semibold text-gray-700">
-                    Filter by Leader:
+                    Filter by Target:
                 </label>
                 <select
                     id="leader-filter"
                     className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[200px]"
                     value={selectedleaderFilter}
-                    onChange={(e) => setSelectedleaderFilter(e.target.value)}
+                    onChange={handleFilterChange}
                 >
                     <option value="">All (Show All)</option>
                     {leaderList.map((s) => (
@@ -119,6 +134,32 @@ const Leader = () => {
                 data={leader}
                 isLoading={isLoading}
             />
+
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between mt-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <div className="text-sm text-gray-600">
+                    Showing page <span className="font-semibold">{paginationData.page}</span> of{" "}
+                    <span className="font-semibold">{paginationData.totalPages}</span> (Total: {paginationData.total})
+                </div>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((old) => Math.max(old - 1, 1))}
+                        disabled={page === 1}
+                    >
+                        Previous
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((old) => Math.min(old + 1, paginationData.totalPages))}
+                        disabled={page >= paginationData.totalPages}
+                    >
+                        Next
+                    </Button>
+                </div>
+            </div>
 
             <DeleteDialog
                 isOpen={!!leaderToDelete}

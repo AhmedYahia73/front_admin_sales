@@ -4,6 +4,7 @@ import { DataTable } from "@/components/DataTable";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { useGet } from "@/hooks/useGet";
 import { useMutation } from "@/hooks/useMutation";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 const formatDate = (dateString) => {
@@ -21,17 +22,17 @@ const formatDate = (dateString) => {
 const Admin = () => {
     const navigate = useNavigate();
 
-    // ---- Filter State ----
-    const [selectedadminFilter, setSelectedadminFilter] = useState("");
+    // ---- Pagination State ----
+    const [page, setPage] = useState(1);
 
-    // ---- Get admin Data ----
-    // ⚠️ غيري اسم الـ key (مثلاً admin_id أو admin_id أو id) حسب ما يطلبه الباك إند ف الـ Query
-    const adminApiUrl = selectedadminFilter
-        ? `/api/admin/admins?target_id=${selectedadminFilter}`
-        : "/api/admin/admins";
+    // ---- Get admin Data (Dynamic based on page) ----
+    const adminApiUrl = `/api/admin/admins?page=${page}`;
 
     const { data: response, loading: isLoading, refresh } = useGet(adminApiUrl);
     const admin = response?.data?.admins || [];
+    
+    // استخراج بيانات الـ Pagination من الـ Response
+    const paginationData = response?.data?.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 };
 
     const [adminToDelete, setAdminToDelete] = useState(null);
     const { mutate: deleteAdmin, loading: isDeleting } = useMutation();
@@ -68,10 +69,11 @@ const Admin = () => {
             accessorKey: "status",
             header: "Status",
             render: (row) => (
-                <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${row.status === "active"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-gray-100 text-gray-800"
-                    }`}>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
+                    row.status === "active"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-gray-100 text-gray-800"
+                }`}>
                     {row.status || "-"}
                 </span>
             ),
@@ -80,26 +82,6 @@ const Admin = () => {
 
     return (
         <div className="container mx-auto py-10">
-            {/* admin Filter Section */}
-            {/* <div className="mb-4 flex items-center gap-3 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                <label htmlFor="admin-filter" className="text-sm font-semibold text-gray-700">
-                    Filter by Admin:
-                </label>
-                <select
-                    id="admin-filter"
-                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[200px]"
-                    value={selectedadminFilter}
-                    onChange={(e) => setSelectedadminFilter(e.target.value)}
-                >
-                    <option value="">All (Show All)</option>
-                    {adminList.map((s) => (
-                        <option key={s.id} value={s.id}>
-                            {s.name}
-                        </option>
-                    ))}
-                </select>
-            </div> */}
-
             <DataTable
                 title="admin Management"
                 onAdd={() => navigate("/admin/add")}
@@ -110,6 +92,32 @@ const Admin = () => {
                 data={admin}
                 isLoading={isLoading}
             />
+
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between mt-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <div className="text-sm text-gray-600">
+                    Showing page <span className="font-semibold">{paginationData.page}</span> of{" "}
+                    <span className="font-semibold">{paginationData.totalPages}</span> (Total: {paginationData.total})
+                </div>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((old) => Math.max(old - 1, 1))}
+                        disabled={page === 1}
+                    >
+                        Previous
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((old) => Math.min(old + 1, paginationData.totalPages))}
+                        disabled={page >= paginationData.totalPages}
+                    >
+                        Next
+                    </Button>
+                </div>
+            </div>
 
             <DeleteDialog
                 isOpen={!!adminToDelete}

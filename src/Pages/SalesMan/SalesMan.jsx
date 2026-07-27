@@ -4,7 +4,7 @@ import { DataTable } from "@/components/DataTable";
 import { useGet } from "@/hooks/useGet";
 import { useMutation } from "@/hooks/useMutation";
 import { DeleteDialog } from "@/components/DeleteDialog";
-// استخدام sonner بناءً على طلبك
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner"; 
 
 const formatDate = (dateString) => {
@@ -22,16 +22,30 @@ const formatDate = (dateString) => {
 const SalesMan = () => {
     const navigate = useNavigate();
 
-    // ---- Filter State ----
+    // ---- Filter & Pagination States ----
     const [selectedSalesFilter, setSelectedSalesFilter] = useState("");
+    const [page, setPage] = useState(1);
 
-    // ---- Get Sales Data ----
-    const salesApiUrl = selectedSalesFilter
-        ? `/api/admin/sales?sales_id=${selectedSalesFilter}`
-        : "/api/admin/sales";
+    // ---- Get Sales Data (Dynamic based on filter & page) ----
+    const queryParams = new URLSearchParams();
+    queryParams.append("page", page);
+    if (selectedSalesFilter) {
+        queryParams.append("sales_id", selectedSalesFilter);
+    }
+
+    const salesApiUrl = `/api/admin/sales?${queryParams.toString()}`;
 
     const { data: response, loading: isLoading, refresh } = useGet(salesApiUrl);
     const sales = response?.data?.sales || [];
+    
+    // استخراج بيانات الـ Pagination من الـ Response
+    const paginationData = response?.data?.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 };
+
+    // إعادة تعيين الصفحة إلى 1 عند تغيير الفلتر
+    const handleFilterChange = (e) => {
+        setSelectedSalesFilter(e.target.value);
+        setPage(1);
+    };
 
     const [salesToDelete, setSalesToDelete] = useState(null);
     
@@ -41,7 +55,7 @@ const SalesMan = () => {
 
     const { mutate: deleteSales, loading: isDeleting } = useMutation();
 
-    // ---- 2. دالة الحذف (Delete) ----
+    // ---- Delete flow ----
     const handleDeleteClick = (row) => {
         setSalesToDelete(row);
     };
@@ -56,11 +70,11 @@ const SalesMan = () => {
         });
 
         if (result.success) {
-            toast.success("Sales deleted successfully"); // sonner هتشتغل هنا تمام
+            toast.success("Sales deleted successfully");
             setSalesToDelete(null);
             refresh?.();
         } else {
-            toast.error("Failed to delete sales"); // وهنا كمان
+            toast.error("Failed to delete sales");
         }
     };
 
@@ -83,10 +97,11 @@ const SalesMan = () => {
             accessorKey: "status",
             header: "Status",
             render: (row) => (
-                <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${row.status === "active"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-gray-100 text-gray-800"
-                    }`}>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
+                    row.status === "active"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-gray-100 text-gray-800"
+                }`}>
                     {row.status || "-"}
                 </span>
             ),
@@ -104,7 +119,7 @@ const SalesMan = () => {
                     id="sales-filter"
                     className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[200px]"
                     value={selectedSalesFilter}
-                    onChange={(e) => setSelectedSalesFilter(e.target.value)}
+                    onChange={handleFilterChange}
                 >
                     <option value="">All (Show All)</option>
                     {salesList.map((s) => (
@@ -126,6 +141,32 @@ const SalesMan = () => {
                 onDelete={handleDeleteClick}
             />
             
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between mt-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <div className="text-sm text-gray-600">
+                    Showing page <span className="font-semibold">{paginationData.page}</span> of{" "}
+                    <span className="font-semibold">{paginationData.totalPages}</span> (Total: {paginationData.total})
+                </div>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((old) => Math.max(old - 1, 1))}
+                        disabled={page === 1}
+                    >
+                        Previous
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((old) => Math.min(old + 1, paginationData.totalPages))}
+                        disabled={page >= paginationData.totalPages}
+                    >
+                        Next
+                    </Button>
+                </div>
+            </div>
+
             <DeleteDialog
                 isOpen={!!salesToDelete}
                 onClose={() => setSalesToDelete(null)}

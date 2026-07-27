@@ -4,16 +4,22 @@ import { DataTable } from "@/components/DataTable";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { useGet } from "@/hooks/useGet";
 import { useMutation } from "@/hooks/useMutation";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 const WishList = () => {
     const navigate = useNavigate();
 
-    // ---- Get WishList Data ----
-    const { data: response, loading: isLoading, refresh } = useGet("/api/admin/wish_list");
+    // ---- Pagination State ----
+    const [page, setPage] = useState(1);
 
-    // استخراج المصفوفة بناءً على الـ Response Schema
+    // ---- Get WishList Data (Dynamic based on page) ----
+    const wishListApiUrl = `/api/admin/wish_list?page=${page}`;
+    const { data: response, loading: isLoading, refresh } = useGet(wishListApiUrl);
+
+    // استخراج المصفوفة وبيانات التقسيم بناءً على الـ Response Schema
     const wish_list = response?.data?.allWishLists || response?.allWishLists || [];
+    const paginationData = response?.data?.pagination || response?.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 };
 
     const [wishListToDelete, setWishListToDelete] = useState(null);
     const { mutate: deleteWishList, loading: isDeleting } = useMutation();
@@ -64,6 +70,32 @@ const WishList = () => {
                 onEdit={handleEdit}
                 onDelete={handleDeleteClick}
             />
+
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between mt-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <div className="text-sm text-gray-600">
+                    Showing page <span className="font-semibold">{paginationData.page}</span> of{" "}
+                    <span className="font-semibold">{paginationData.totalPages}</span> (Total: {paginationData.total})
+                </div>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((old) => Math.max(old - 1, 1))}
+                        disabled={page === 1}
+                    >
+                        Previous
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((old) => Math.min(old + 1, paginationData.totalPages))}
+                        disabled={page >= paginationData.totalPages}
+                    >
+                        Next
+                    </Button>
+                </div>
+            </div>
 
             <DeleteDialog
                 isOpen={!!wishListToDelete}

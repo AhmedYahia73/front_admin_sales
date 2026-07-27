@@ -1,45 +1,46 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DataTable } from "@/components/DataTable";
-import { DeleteDialog } from "@/components/DeleteDialog";
 import { useGet } from "@/hooks/useGet";
 import { useMutation } from "@/hooks/useMutation";
-import { MapPin, StickyNote } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-// استيراد مكونات الـ Dialog والمكونات الإضافية للزرار
-import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-} from "@/components/ui/dialog";
-
 const statusColors = {
-    "Negotiation": "bg-yellow-100 text-yellow-800",
-    "Sales": "bg-gray-100 text-gray-800",
-    "Deliverd": "bg-green-100 text-green-800",
+    "approve": "bg-green-100 text-green-800",
+    "reject": "bg-red-100 text-red-800",
+    "pending": "bg-yellow-100 text-yellow-800",
 }; 
 
 const Requests = () => {
     const navigate = useNavigate();
- 
-  
-    const { data: response, loading: isLoading, refresh } = useGet("/api/admin/status_requests/pending");
+
+    // ---- Pagination State ----
+    const [page, setPage] = useState(1);
+
+    // ---- Get Requests Data (Dynamic based on page) ----
+    const requestsApiUrl = `/api/admin/status_requests/pending?page=${page}`;
+    const { data: response, loading: isLoading, refresh } = useGet(requestsApiUrl);
+
+    // استخراج الداتا والـ pagination بناءً على الـ Response Schema
     const requests = response?.data?.pendingRequests || [];
- 
- 
+    const paginationData = response?.data?.pagination || { 
+        totalItems: 0, 
+        totalPages: 1, 
+        currentPage: 1, 
+        limit: 10,
+        hasNextPage: false,
+        hasPrevPage: false
+    };
+
     const { mutate: updateRequest } = useMutation();
-   
 
     // ---- Update Status flow ----
-    const handleStatusChange = async (requests, status) => {
+    const handleStatusChange = async (requestItem, status) => {
         const payload = { status: status };
         const result = await updateRequest({
             method: "PUT",
-            url: `/api/admin/status_requests/status/${requests.id}`,
+            url: `/api/admin/status_requests/status/${requestItem.id}`,
             data: payload,
         });
 
@@ -57,28 +58,26 @@ const Requests = () => {
         { accessorKey: "visit_name", header: "Visit" },
         { accessorKey: "from", header: "From Status" },
         { accessorKey: "to", header: "To Status" },
-        { accessorKey: "visit_name", header: "Visit" },
         { 
-            accessorKey: "visit_status",
+            accessorKey: "status",
             header: "Status",
             render: (row) => {
-
                 return (
                     <select
                         className={`px-2 py-1 rounded-full text-xs font-medium border-0 cursor-pointer focus:ring-2 focus:ring-offset-1 transition-colors ${
-                            statusColors[row.visit_status] || "bg-gray-100 text-gray-800"
+                            statusColors[row.status] || "bg-yellow-100 text-yellow-800"
                         }`}
-                        value="pending"
+                        value={row.status || "pending"}
                         onChange={(e) => {
                             if (e.target.value) handleStatusChange(row, e.target.value);
                         }}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <option value="" >Select Status</option> 
-                        <option key="approve" value="approve" className="bg-white text-black">
+                        <option value="pending" disabled>Pending</option> 
+                        <option value="approve" className="bg-white text-black">
                             Approve
                         </option>
-                        <option key="reject" value="reject" className="bg-white text-black">
+                        <option value="reject" className="bg-white text-black">
                             Reject
                         </option>
                     </select>
@@ -89,16 +88,38 @@ const Requests = () => {
 
     return (
         <div className="container mx-auto py-10">
-            {/* Sales Filter Section */}
-       
-
             <DataTable
                 title="Requests Management"  
                 columns={columns}
                 data={requests}
                 isLoading={isLoading}
             />
-  
+
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between mt-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <div className="text-sm text-gray-600">
+                    Showing page <span className="font-semibold">{paginationData.currentPage}</span> of{" "}
+                    <span className="font-semibold">{paginationData.totalPages}</span> (Total: {paginationData.totalItems})
+                </div>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((old) => Math.max(old - 1, 1))}
+                        disabled={!paginationData.hasPrevPage || page === 1}
+                    >
+                        Previous
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((old) => Math.min(old + 1, paginationData.totalPages))}
+                        disabled={!paginationData.hasNextPage || page >= paginationData.totalPages}
+                    >
+                        Next
+                    </Button>
+                </div>
+            </div>
         </div>
     );
 };

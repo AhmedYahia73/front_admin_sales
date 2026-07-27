@@ -7,7 +7,6 @@ import { useMutation } from "@/hooks/useMutation";
 import { MapPin, StickyNote } from "lucide-react";
 import { toast } from "sonner";
 
-// استيراد مكونات الـ Dialog والمكونات الإضافية للزرار
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -23,34 +22,34 @@ const statusColors = {
     "Deliverd": "bg-green-100 text-green-800",
 };
 
-const formatDate = (dateString) => {
-    if (!dateString) return "-";
-    const date = new Date(dateString);
-    return date.toLocaleString("ar-EG", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-};
-
 const Visits = () => {
     const navigate = useNavigate();
 
-    // ---- Filter State ----
+    // ---- Pagination & Filter States ----
+    const [page, setPage] = useState(1);
     const [selectedSalesFilter, setSelectedSalesFilter] = useState("");
-
-    // ---- Notes State (FIX 1: إضافته هنا بدلاً من نسيه) ----
     const [selectedNotes, setSelectedNotes] = useState(null);
 
-    // ---- Get Visits Data (Dynamic based on filter) ----
-    const visitsApiUrl = selectedSalesFilter
-        ? `/api/admin/visits?sales_id=${selectedSalesFilter}`
-        : "/api/admin/visits";
+    // ---- Get Visits Data (Dynamic based on filter & page) ----
+    const queryParams = new URLSearchParams();
+    queryParams.append("page", page);
+    if (selectedSalesFilter) {
+        queryParams.append("sales_id", selectedSalesFilter);
+    }
+
+    const visitsApiUrl = `/api/admin/visits?${queryParams.toString()}`;
 
     const { data: response, loading: isLoading, refresh } = useGet(visitsApiUrl);
     const visits = response?.data?.allVisits || [];
+    
+    // استخراج بيانات الـ Pagination من الـ Response (حسب شكل الـ JSON الذي أرسلته)
+    const paginationData = response?.data?.pagination || response?.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 };
+
+    // إعادة تعيين الصفحة إلى 1 عند تغيير الفلتر
+    const handleFilterChange = (e) => {
+        setSelectedSalesFilter(e.target.value);
+        setPage(1); 
+    };
 
     // ---- Get Status & Sales Lists ----
     const { data: listsResponse } = useGet("/api/admin/visits/lists");
@@ -62,7 +61,6 @@ const Visits = () => {
     const { mutate: deleteVisit, loading: isDeleting } = useMutation();
     const { mutate: updateVisit } = useMutation();
 
-    // ---- Delete flow ----
     const [visitToDelete, setVisitToDelete] = useState(null);
 
     const handleDeleteClick = (visit) => {
@@ -86,7 +84,6 @@ const Visits = () => {
         }
     };
 
-    // ---- Update Status flow ----
     const handleStatusChange = async (visit, newStatusId) => {
         const payload = { status_id: newStatusId };
         const result = await updateVisit({
@@ -171,8 +168,8 @@ const Visits = () => {
             accessorKey: "status",
             header: "Sales Status",
             render: (row) => {
-                const currentStatus = sales_statues.find((s) => s.name === row.status);
-                const currentStatusId = currentStatus ? currentStatus.id : row.status || "";
+                const currentStatus = sales_statues.find((s) => s === row.status);
+                const currentStatusId = currentStatus || row.status || "";
 
                 return (
                     <select
@@ -273,7 +270,7 @@ const Visits = () => {
                     id="sales-filter"
                     className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[200px]"
                     value={selectedSalesFilter}
-                    onChange={(e) => setSelectedSalesFilter(e.target.value)}
+                    onChange={handleFilterChange}
                 >
                     <option value="">All Sales (Show All)</option>
                     {salesList.map((s) => (
@@ -293,6 +290,32 @@ const Visits = () => {
                 data={visits}
                 isLoading={isLoading}
             />
+
+            {/* Custom Pagination Controls (تظهر أسفل الجدول إذا كان الـ DataTable لا يدعم الـ Server-side مباشرة) */}
+            <div className="flex items-center justify-between mt-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                <div className="text-sm text-gray-600">
+                    Showing page <span className="font-semibold">{paginationData.page}</span> of{" "}
+                    <span className="font-semibold">{paginationData.totalPages}</span> (Total: {paginationData.total})
+                </div>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((old) => Math.max(old - 1, 1))}
+                        disabled={page === 1}
+                    >
+                        Previous
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((old) => Math.min(old + 1, paginationData.totalPages))}
+                        disabled={page >= paginationData.totalPages}
+                    >
+                        Next
+                    </Button>
+                </div>
+            </div>
 
             {/* Delete Dialog */}
             <DeleteDialog
