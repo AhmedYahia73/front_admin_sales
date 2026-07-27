@@ -10,7 +10,7 @@ import { useGet } from '@/hooks/useGet';
 const menuItems = [
   { name: 'Dashboard', path: '/home', icon: <LayoutDashboard size={20} /> },
   { name: 'Visits', path: '/visits', icon: <Calendar size={20} />, dataKey: 'visitCount' },
-  { name: 'Sales Man', path: '/sales-man', icon: <User size={20} />, dataKey: 'salesCount' },
+  { name: 'Sales Man', path: '/sales-man', icon: <User size={20} /> },
   { name: 'Sales', path: '/sales', icon: <TrendingUp size={20} />, dataKey: 'salesCount' },
   { name: 'Targets', path: '/target', icon: <Target size={20} />, dataKey: 'targetCount' },
   { name: 'WishList', path: '/wishlist', icon: <Heart size={20} />, dataKey: 'wishlistCount' },
