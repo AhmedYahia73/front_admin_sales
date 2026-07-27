@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DataTable } from "@/components/DataTable";
+import { DeleteDialog } from "@/components/DeleteDialog";
 import { useGet } from "@/hooks/useGet";
 import { useMutation } from "@/hooks/useMutation";
-import { DeleteDialog } from "@/components/DeleteDialog";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner"; 
 
 const formatDate = (dateString) => {
@@ -22,40 +24,55 @@ const formatDate = (dateString) => {
 const SalesMan = () => {
     const navigate = useNavigate();
 
-    // ---- Filter & Pagination States ----
-    const [selectedSalesFilter, setSelectedSalesFilter] = useState("");
+    // ---- Filter, Search & Pagination States ----
+    const [selectedLeaderFilter, setSelectedLeaderFilter] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [page, setPage] = useState(1);
 
-    // ---- Get Sales Data (Dynamic based on filter & page) ----
+    // ---- Debounce Search Logic ----
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+            setPage(1); // إعادة التعيين للصفحة الأولى عند كل بحث جديد
+        }, 500);
+
+        return () => clearTimeout(handler);
+    }, [searchQuery]);
+
+    // ---- Build Query Parameters for Backend ----
     const queryParams = new URLSearchParams();
-    queryParams.append("page", page);
-    if (selectedSalesFilter) {
-        queryParams.append("sales_id", selectedSalesFilter);
+    queryParams.append("page", page.toString());
+    queryParams.append("limit", "10");
+
+    if (selectedLeaderFilter) {
+        queryParams.append("leader_id", selectedLeaderFilter);
+    }
+
+    if (debouncedSearch.trim()) {
+        queryParams.append("search", debouncedSearch.trim());
     }
 
     const salesApiUrl = `/api/admin/sales?${queryParams.toString()}`;
 
+    // ---- Get Sales Data ----
     const { data: response, loading: isLoading, refresh } = useGet(salesApiUrl);
     const sales = response?.data?.sales || [];
-    
-    // استخراج بيانات الـ Pagination من الـ Response
     const paginationData = response?.data?.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 };
 
-    // إعادة تعيين الصفحة إلى 1 عند تغيير الفلتر
+    // ---- Get Leaders List for Filter ----
+    const { data: listsResponse } = useGet("/api/admin/sales/lists");
+    const leadersList = listsResponse?.leaders || listsResponse?.data?.leaders || [];
+
+    // ---- Delete Flow ----
+    const [salesToDelete, setSalesToDelete] = useState(null);
+    const { mutate: deleteSales, loading: isDeleting } = useMutation();
+
     const handleFilterChange = (e) => {
-        setSelectedSalesFilter(e.target.value);
+        setSelectedLeaderFilter(e.target.value);
         setPage(1);
     };
 
-    const [salesToDelete, setSalesToDelete] = useState(null);
-    
-    // ---- Get Lists for Filter ----
-    const { data: listsResponse } = useGet("/api/admin/sales/lists");
-    const salesList = listsResponse?.leaders || listsResponse?.data?.leaders || [];
-
-    const { mutate: deleteSales, loading: isDeleting } = useMutation();
-
-    // ---- Delete flow ----
     const handleDeleteClick = (row) => {
         setSalesToDelete(row);
     };
@@ -78,7 +95,7 @@ const SalesMan = () => {
         }
     };
 
-    // ---- Table Columns definition ----
+    // ---- Table Columns Definition ----
     const columns = [
         { accessorKey: "name", header: "Name" },
         { accessorKey: "email", header: "Email" },
@@ -110,24 +127,40 @@ const SalesMan = () => {
 
     return (
         <div className="container mx-auto py-10">
-            {/* Sales Filter Section */}
-            <div className="mb-4 flex items-center gap-3 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                <label htmlFor="sales-filter" className="text-sm font-semibold text-gray-700">
-                    Filter by Leader:
-                </label>
-                <select
-                    id="sales-filter"
-                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[200px]"
-                    value={selectedSalesFilter}
-                    onChange={handleFilterChange}
-                >
-                    <option value="">All (Show All)</option>
-                    {salesList.map((s) => (
-                        <option key={s.id} value={s.id}>
-                            {s.name}
-                        </option>
-                    ))}
-                </select>
+            {/* Controls Section: Filter & Search */}
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                
+                {/* Leader Filter */}
+                <div className="flex items-center gap-3">
+                    <label htmlFor="leader-filter" className="text-sm font-semibold text-gray-700">
+                        Filter by Leader:
+                    </label>
+                    <select
+                        id="leader-filter"
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[200px]"
+                        value={selectedLeaderFilter}
+                        onChange={handleFilterChange}
+                    >
+                        <option value="">All (Show All)</option>
+                        {leadersList.map((leader) => (
+                            <option key={leader.id} value={leader.id}>
+                                {leader.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Search Input (Backend Search) */}
+                <div className="flex items-center gap-2 relative min-w-[250px]">
+                    <Search className="absolute left-3 h-4 w-4 text-gray-400" />
+                    <Input
+                        type="text"
+                        placeholder="Search sales by name, email, or phone..."
+                        className="pl-9"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
             </div>
 
             <DataTable
@@ -137,6 +170,7 @@ const SalesMan = () => {
                 columns={columns}
                 data={sales}
                 isLoading={isLoading}
+                search_auto={false} // إيقاف الفلترة المحلية ليعتمد كلياً على الـ Backend
                 onEdit={(row) => navigate(`/sales-man/${row.id}/edit`, { state: { rowData: row } })}
                 onDelete={handleDeleteClick}
             />
@@ -145,14 +179,14 @@ const SalesMan = () => {
             <div className="flex items-center justify-between mt-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                 <div className="text-sm text-gray-600">
                     Showing page <span className="font-semibold">{paginationData.page}</span> of{" "}
-                    <span className="font-semibold">{paginationData.totalPages}</span> (Total: {paginationData.total})
+                    <span className="font-semibold">{paginationData.totalPages || 1}</span> (Total: {paginationData.total})
                 </div>
                 <div className="flex gap-2">
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setPage((old) => Math.max(old - 1, 1))}
-                        disabled={page === 1}
+                        disabled={page === 1 || isLoading}
                     >
                         Previous
                     </Button>
@@ -160,7 +194,7 @@ const SalesMan = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => setPage((old) => Math.min(old + 1, paginationData.totalPages))}
-                        disabled={page >= paginationData.totalPages}
+                        disabled={page >= paginationData.totalPages || isLoading}
                     >
                         Next
                     </Button>

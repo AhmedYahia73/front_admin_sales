@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DataTable } from "@/components/DataTable";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { useGet } from "@/hooks/useGet";
 import { useMutation } from "@/hooks/useMutation";
-import { MapPin, StickyNote } from "lucide-react";
+import { MapPin, StickyNote, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
     Dialog,
     DialogContent,
@@ -25,24 +26,43 @@ const statusColors = {
 const Visits = () => {
     const navigate = useNavigate();
 
-    // ---- Pagination & Filter States ----
+    // ---- Filter, Search & Pagination States ----
     const [page, setPage] = useState(1);
     const [selectedSalesFilter, setSelectedSalesFilter] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [selectedNotes, setSelectedNotes] = useState(null);
 
-    // ---- Get Visits Data (Dynamic based on filter & page) ----
+    // ---- Debounce Search Logic ----
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+            setPage(1); // إعادة التعيين للصفحة الأولى عند كل بحث جديد
+        }, 500);
+
+        return () => clearTimeout(handler);
+    }, [searchQuery]);
+
+    // ---- Build Query Parameters for Backend ----
     const queryParams = new URLSearchParams();
-    queryParams.append("page", page);
+    queryParams.append("page", page.toString());
+    queryParams.append("limit", "10");
+
     if (selectedSalesFilter) {
         queryParams.append("sales_id", selectedSalesFilter);
     }
 
+    if (debouncedSearch.trim()) {
+        queryParams.append("search", debouncedSearch.trim());
+    }
+
     const visitsApiUrl = `/api/admin/visits?${queryParams.toString()}`;
 
+    // ---- Get Visits Data ----
     const { data: response, loading: isLoading, refresh } = useGet(visitsApiUrl);
     const visits = response?.data?.allVisits || [];
     
-    // استخراج بيانات الـ Pagination من الـ Response (حسب شكل الـ JSON الذي أرسلته)
+    // استخراج بيانات الـ Pagination من الـ Response
     const paginationData = response?.data?.pagination || response?.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 };
 
     // إعادة تعيين الصفحة إلى 1 عند تغيير الفلتر
@@ -261,24 +281,40 @@ const Visits = () => {
 
     return (
         <div className="container mx-auto py-10">
-            {/* Sales Filter Section */}
-            <div className="mb-4 flex items-center gap-3 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                <label htmlFor="sales-filter" className="text-sm font-semibold text-gray-700">
-                    Filter by Sales:
-                </label>
-                <select
-                    id="sales-filter"
-                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[200px]"
-                    value={selectedSalesFilter}
-                    onChange={handleFilterChange}
-                >
-                    <option value="">All Sales (Show All)</option>
-                    {salesList.map((s) => (
-                        <option key={s.id} value={s.id}>
-                            {s.name}
-                        </option>
-                    ))}
-                </select>
+            {/* Controls Section: Filter & Search */}
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                
+                {/* Sales Filter */}
+                <div className="flex items-center gap-3">
+                    <label htmlFor="sales-filter" className="text-sm font-semibold text-gray-700">
+                        Filter by Sales:
+                    </label>
+                    <select
+                        id="sales-filter"
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[200px]"
+                        value={selectedSalesFilter}
+                        onChange={handleFilterChange}
+                    >
+                        <option value="">All Sales (Show All)</option>
+                        {salesList.map((s) => (
+                            <option key={s.id} value={s.id}>
+                                {s.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Search Input (Backend Search) */}
+                <div className="flex items-center gap-2 relative min-w-[250px]">
+                    <Search className="absolute left-3 h-4 w-4 text-gray-400" />
+                    <Input
+                        type="text"
+                        placeholder="Search visits by name, phone or address..."
+                        className="pl-9"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
             </div>
 
             <DataTable
@@ -289,20 +325,21 @@ const Visits = () => {
                 columns={columns}
                 data={visits}
                 isLoading={isLoading}
+                search_auto={false} // إيقاف الفلترة المحلية ليعتمد كلياً على الـ Backend
             />
 
-            {/* Custom Pagination Controls (تظهر أسفل الجدول إذا كان الـ DataTable لا يدعم الـ Server-side مباشرة) */}
+            {/* Pagination Controls */}
             <div className="flex items-center justify-between mt-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                 <div className="text-sm text-gray-600">
                     Showing page <span className="font-semibold">{paginationData.page}</span> of{" "}
-                    <span className="font-semibold">{paginationData.totalPages}</span> (Total: {paginationData.total})
+                    <span className="font-semibold">{paginationData.totalPages || 1}</span> (Total: {paginationData.total})
                 </div>
                 <div className="flex gap-2">
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setPage((old) => Math.max(old - 1, 1))}
-                        disabled={page === 1}
+                        disabled={page === 1 || isLoading}
                     >
                         Previous
                     </Button>
@@ -310,7 +347,7 @@ const Visits = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => setPage((old) => Math.min(old + 1, paginationData.totalPages))}
-                        disabled={page >= paginationData.totalPages}
+                        disabled={page >= paginationData.totalPages || isLoading}
                     >
                         Next
                     </Button>
