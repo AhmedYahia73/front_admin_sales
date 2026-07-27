@@ -334,10 +334,7 @@ const Visits = () => {
             </div>
 
             <DataTable
-                title="Visits Management"
-                onAdd={() => navigate("/visits/add")}
-                onDelete={handleDeleteClick}
-                onEdit={(row) => navigate(`/visits/${row.id}/edit`)}
+                title="Visits Management" 
                 columns={columns}
                 data={visits}
                 isLoading={isLoading}
