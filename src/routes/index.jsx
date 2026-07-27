@@ -20,6 +20,8 @@ import Admin from '@/Pages/Admin/Admin';
 import AdminAdd from '@/Pages/Admin/AdminAdd';
 import VisitStatusAdd from '@/Pages/VisitStatus/VisitStatusAdd';
 import VisitStatus from '@/Pages/VisitStatus/VisitStatus';
+import PendingRequests from '@/Pages/StatusRequests/Requests';
+import HistoryRequests from '@/Pages/StatusRequests/HistoryRequests';
 
 
 // Protected Route Wrapper
@@ -43,6 +45,10 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to="/home" replace /> },
       { path: 'home', element: <Home /> },
 
+      // reequests
+      { path: 'requests', element: <PendingRequests /> },
+      { path: 'history-requests', element: <HistoryRequests /> },
+      
       // visits
       { path: 'visits', element: <Visits /> },
       { path: 'visits/add', element: <VisitsAdd /> },
