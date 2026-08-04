@@ -45,6 +45,25 @@ const Visits = () => {
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [page, setPage] = useState(1);
 
+    // ---- Month & Year Filter States ----
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+    const [selectedMonth, setSelectedMonth] = useState("");
+
+    const months = [
+        { value: "01", label: "Jan" },
+        { value: "02", label: "Feb" },
+        { value: "03", label: "Mar" },
+        { value: "04", label: "Apr" },
+        { value: "05", label: "May" },
+        { value: "06", label: "Jun" },
+        { value: "07", label: "Jul" },
+        { value: "08", label: "Aug" },
+        { value: "09", label: "Sep" },
+        { value: "10", label: "Oct" },
+        { value: "11", label: "Nov" },
+        { value: "12", label: "Dec" },
+    ];
+
     // ---- Notes State ----
     const [selectedNotes, setSelectedNotes] = useState(null);
 
@@ -69,6 +88,16 @@ const Visits = () => {
 
     if (debouncedSearch.trim()) {
         queryParams.append("search", debouncedSearch.trim());
+    }
+
+    if (selectedMonth && selectedYear) {
+        // حساب أول يوم وآخر يوم في الشهر المُختار
+        const startDate = `${selectedYear}-${selectedMonth}-01`;
+        const lastDay = new Date(parseInt(selectedYear), parseInt(selectedMonth), 0).getDate();
+        const endDate = `${selectedYear}-${selectedMonth}-${lastDay}`;
+        
+        queryParams.append("from", startDate);
+        queryParams.append("to", endDate);
     }
 
     const salesApiUrl = `/api/admin/visits/sales?${queryParams.toString()}`;
@@ -297,6 +326,46 @@ const Visits = () => {
 
     return (
         <div className="container mx-auto py-10">
+            {/* Year & Month Filter */}
+            <div className="mb-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col gap-4">
+                <div className="flex items-center gap-3">
+                    <label htmlFor="year-filter" className="text-sm font-semibold text-gray-700">
+                        Filter by Year:
+                    </label>
+                    <select
+                        id="year-filter"
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[120px]"
+                        value={selectedYear}
+                        onChange={(e) => {
+                            setSelectedYear(e.target.value);
+                            setPage(1);
+                        }}
+                    >
+                        {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+                            <option key={y} value={y}>{y}</option>
+                        ))}
+                    </select>
+                </div>
+                
+                <div className="flex flex-wrap gap-2">
+                    <button
+                        className={`px-3 py-1.5 text-sm rounded-md transition-colors ${selectedMonth === "" ? "bg-red-500 text-white font-medium shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"}`}
+                        onClick={() => { setSelectedMonth(""); setPage(1); }}
+                    >
+                        All Months
+                    </button>
+                    {months.map(m => (
+                        <button
+                            key={m.value}
+                            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${selectedMonth === m.value ? "bg-red-500 text-white font-medium shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"}`}
+                            onClick={() => { setSelectedMonth(m.value); setPage(1); }}
+                        >
+                            {m.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
             {/* Controls Section: Filter & Search */}
             <div className="mb-4 flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                 
