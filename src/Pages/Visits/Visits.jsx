@@ -53,6 +53,15 @@ const Visits = () => {
 
     const [selectedNotes, setSelectedNotes] = useState(null);
 
+    // ---- Product Selection States ----
+    const [productModalOpen, setProductModalOpen] = useState(false);
+    const [pendingSalesStatusVisit, setPendingSalesStatusVisit] = useState(null);
+    const [selectedProductId, setSelectedProductId] = useState("");
+
+    // ---- Get Products Data ----
+    const { data: productsRes } = useGet("/api/admin/products");
+    const productsList = productsRes?.data?.products || productsRes?.products || productsRes?.data || [];
+
     // ---- Debounce Search Logic ----
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -151,6 +160,13 @@ const Visits = () => {
     };
 
     const handleSalesStatusChange = async (visit, newStatus) => {
+        if (newStatus === "sales") {
+            setPendingSalesStatusVisit(visit);
+            setSelectedProductId(visit.product_id || "");
+            setProductModalOpen(true);
+            return;
+        }
+
         const payload = { status: newStatus };
         const result = await updateVisit({
             method: "PUT",
@@ -163,6 +179,27 @@ const Visits = () => {
             refresh?.();
         } else {
             toast?.error?.("Failed to update status");
+        }
+    };
+
+    const confirmProductEnrollment = async () => {
+        if (!pendingSalesStatusVisit || !selectedProductId) {
+            toast.error("Please select a product");
+            return;
+        }
+        const result = await updateVisit({
+            method: "PUT",
+            url: `/api/admin/visits/${pendingSalesStatusVisit.id}`,
+            data: { status: "sales", product_id: selectedProductId },
+        });
+        
+        if (result.success) {
+            toast.success("Status updated and product enrolled successfully");
+            setProductModalOpen(false);
+            setPendingSalesStatusVisit(null);
+            refresh?.();
+        } else {
+            toast.error("Failed to update status and enroll product");
         }
     };
 
@@ -186,6 +223,11 @@ const Visits = () => {
         { accessorKey: "name", header: "Name" },
         { accessorKey: "address", header: "Address" },
         { accessorKey: "phone", header: "Phone" },
+        {
+            accessorKey: "product",
+            header: "Product",
+            render: (row) => row.product?.name || row.product_name || "-",
+        },
         {
             accessorKey: "visit_status",
             header: "Status",
@@ -423,6 +465,34 @@ const Visits = () => {
                     </Button>
                 </div>
             </div>
+
+            {/* Product Enrollment Dialog */}
+            <Dialog open={productModalOpen} onOpenChange={setProductModalOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Enroll Product for Sales</DialogTitle>
+                        <DialogDescription>
+                            Please select a product to enroll this visit as a sale.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <select 
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={selectedProductId}
+                            onChange={(e) => setSelectedProductId(e.target.value)}
+                        >
+                            <option value="">Select a Product</option>
+                            {productsList.map(p => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setProductModalOpen(false)}>Cancel</Button>
+                        <Button onClick={confirmProductEnrollment}>Confirm</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {/* Delete Dialog */}
             <DeleteDialog

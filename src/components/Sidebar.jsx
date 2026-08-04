@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import {
   Heart, Calendar, Target, CheckCircle, User,
   TrendingUp, Shield, UserCog, LayoutDashboard, Menu,
-  FileText, ChevronDown, Clock, History
+  FileText, ChevronDown, Clock, History, Package
 } from 'lucide-react';
 import { useGet } from '@/hooks/useGet';
 
@@ -17,6 +17,7 @@ const menuItems = [
   { name: 'Leader', path: '/leader', icon: <UserCog size={20} />, dataKey: 'complaintCount' },
   { name: 'Admin', path: '/admin', icon: <Shield size={20} />, dataKey: 'adminCount' },
   { name: 'Visit Status', path: '/visitstatus', icon: <CheckCircle size={20} />, dataKey: 'visitstatusCount' },
+  { name: 'Products', path: '/products', icon: <Package size={20} /> },
   
   // إضافة قسم Requests مع القائمة المنسدلة
   {

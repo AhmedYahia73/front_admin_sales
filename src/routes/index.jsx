@@ -20,6 +20,8 @@ import Admin from '@/Pages/Admin/Admin';
 import AdminAdd from '@/Pages/Admin/AdminAdd';
 import VisitStatusAdd from '@/Pages/VisitStatus/VisitStatusAdd';
 import VisitStatus from '@/Pages/VisitStatus/VisitStatus';
+import Products from '@/Pages/Products/Products';
+import ProductsAdd from '@/Pages/Products/ProductsAdd';
 import PendingRequests from '@/Pages/StatusRequests/Requests';
 import HistoryRequests from '@/Pages/StatusRequests/HistoryRequests';
 
@@ -27,6 +29,14 @@ import HistoryRequests from '@/Pages/StatusRequests/HistoryRequests';
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
   if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+  try {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user?.role !== 'admin') {
+      return <Navigate to="/login" replace />;
+    }
+  } catch (error) {
     return <Navigate to="/login" replace />;
   }
   return children;
@@ -86,6 +96,19 @@ export const router = createBrowserRouter([
       {
         path: 'admin/:id/edit',
         element: <AdminAdd />
+      },
+      // products
+      {
+        path: 'products',
+        element: <Products />
+      },
+      {
+        path: 'products/add',
+        element: <ProductsAdd />
+      },
+      {
+        path: 'products/:id/edit',
+        element: <ProductsAdd />
       },
       // visit status
       {

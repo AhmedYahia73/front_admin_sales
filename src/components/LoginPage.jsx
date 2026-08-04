@@ -6,6 +6,7 @@ import { setAuthToken } from '@/utils/auth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useMutation } from '@/hooks/useMutation';
+import { toast } from 'sonner';
 
 // استيراد اللوجو (تأكدي من صحة المسار في مشروعك)
 import logo from '@/assets/logo.jpg'; 
@@ -39,6 +40,11 @@ const handleSubmit = async (e) => {
     if (response?.data?.data) {
         const { token, user } = response.data.data;
         
+        if (user.role !== 'admin') {
+            toast.error("عفواً، لا تملك الصلاحية للدخول كمدير (Admin)");
+            return;
+        }
+
         // 1. تخزين التوكن في الكوكيز
         setAuthToken(token);
         
