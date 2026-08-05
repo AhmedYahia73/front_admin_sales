@@ -13,7 +13,7 @@ const Products = () => {
     const { data: response, loading: isLoading, refresh } = useGet("/api/admin/products");
 
     // Extract array from Response
-    const productsList = response?.data?.products || response?.products || response?.data || [];
+    const productsList = response?.data?.allProducts || response?.allProducts || response?.data?.products || response?.products || response?.data || [];
 
     const [productToDelete, setProductToDelete] = useState(null);
     const { mutate: deleteProduct, loading: isDeleting } = useMutation();
@@ -21,6 +21,7 @@ const Products = () => {
     // ---- Table Columns definition ----
     const columns = [
         { accessorKey: "name", header: "Name" },
+        { accessorKey: "feez", header: "Feez" },
     ];
 
     // ---- 1. Edit ----

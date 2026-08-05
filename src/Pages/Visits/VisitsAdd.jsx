@@ -42,6 +42,9 @@ const VisitsAdd = () => {
     listsResponse?.visit_status || listsResponse?.data?.visit_status || [];
   const salesList =
     listsResponse?.sales || listsResponse?.data?.sales || [];
+    
+  const { data: productsRes } = useGet("/api/admin/products");
+  const productsList = productsRes?.data?.allProducts || productsRes?.allProducts || productsRes?.data?.products || [];
 
   const { data: visitResponse, loading: isFetching } = useGet(
     isEdit ? `/api/admin/visits/${id}` : null,
@@ -64,6 +67,8 @@ const VisitsAdd = () => {
       lng: rawData.lng ?? DEFAULT_CENTER.lng,
       status_id: rawData.status_id,
       sales_id: rawData.sales_id ?? matchedSales?.id ?? "",
+      product_id: rawData.product_id || "",
+      duration: rawData.duration || "",
     };
   }, [rawData, salesList]);
 
@@ -90,6 +95,19 @@ const VisitsAdd = () => {
 
         const watchedLat = watch("lat");
         const watchedLng = watch("lng");
+        const watchedStatusId = watch("status_id");
+        const watchedProductId = watch("product_id");
+        
+        const selectedStatus = statusList.find(s => s.id === watchedStatusId);
+        const statusNameLower = selectedStatus?.name?.toLowerCase();
+        const isSales = statusNameLower === "sales" || statusNameLower === "delivered";
+        const selectedProduct = productsList.find(p => p.id === watchedProductId);
+        let pointsData = selectedProduct?.points || [];
+        if (typeof pointsData === 'string') {
+            try { pointsData = JSON.parse(pointsData); } catch(e) { pointsData = []; }
+        }
+        const availableDurations = pointsData.map(p => p.duration) || [];
+
         const [locationName, setLocationName] = useState(
           initialData?.address || "",
         );
@@ -290,6 +308,147 @@ const VisitsAdd = () => {
                   )}
                 </div>
 
+                {isSales && (
+                  <>
+                    {/* 4a. Product Search Select */}
+                    <div className="space-y-2 flex flex-col w-full">
+                      <Label className="text-sm font-medium">Product *</Label>
+                      <Controller
+                        name="product_id"
+                        control={control}
+                        rules={{ required: isSales }}
+                        render={({ field }) => (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                  "w-full justify-between font-normal text-left h-10 px-3 text-sm rounded-md",
+                                  !field.value && "text-muted-foreground",
+                                )}
+                              >
+                                {field.value
+                                  ? productsList.find((p) => p.id === field.value)?.name
+                                  : "Select Product"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              className="w-[var(--radix-popover-trigger-width)] p-0"
+                              align="start"
+                            >
+                              <Command className="text-sm">
+                                <CommandInput
+                                  placeholder="Search product..."
+                                  className="h-9 text-sm"
+                                />
+                                <CommandList>
+                                  <CommandEmpty className="p-2 text-sm text-center text-gray-500">
+                                    No results found.
+                                  </CommandEmpty>
+                                  <CommandGroup>
+                                    {productsList.map((p) => (
+                                      <CommandItem
+                                        key={p.id}
+                                        value={p.name}
+                                        className="text-sm py-1.5 px-2 cursor-pointer"
+                                        onSelect={() => {
+                                          field.onChange(p.id);
+                                          setValue("duration", ""); // Reset duration on product change
+                                        }}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            p.id === field.value
+                                              ? "opacity-100"
+                                              : "opacity-0",
+                                          )}
+                                        />
+                                        {p.name}
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                        )}
+                      />
+                      {errors.product_id && (
+                        <span className="text-xs text-red-500">
+                          Product is required when status is sales
+                        </span>
+                      )}
+                    </div>
+
+                    {/* 4b. Duration Search Select */}
+                    <div className="space-y-2 flex flex-col w-full">
+                      <Label className="text-sm font-medium">Duration *</Label>
+                      <Controller
+                        name="duration"
+                        control={control}
+                        rules={{ required: isSales }}
+                        render={({ field }) => (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                disabled={!watchedProductId}
+                                className={cn(
+                                  "w-full justify-between font-normal text-left h-10 px-3 text-sm rounded-md",
+                                  !field.value && "text-muted-foreground",
+                                )}
+                              >
+                                {field.value ? field.value : "Select Duration"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              className="w-[var(--radix-popover-trigger-width)] p-0"
+                              align="start"
+                            >
+                              <Command className="text-sm">
+                                <CommandList>
+                                  <CommandEmpty className="p-2 text-sm text-center text-gray-500">
+                                    No durations found for this product.
+                                  </CommandEmpty>
+                                  <CommandGroup>
+                                    {availableDurations.map((d) => (
+                                      <CommandItem
+                                        key={d}
+                                        value={d}
+                                        className="text-sm py-1.5 px-2 cursor-pointer"
+                                        onSelect={() => field.onChange(d)}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            d === field.value
+                                              ? "opacity-100"
+                                              : "opacity-0",
+                                          )}
+                                        />
+                                        {d}
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                        )}
+                      />
+                      {errors.duration && (
+                        <span className="text-xs text-red-500">
+                          Duration is required when status is sales
+                        </span>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* 5. Notes Field */}

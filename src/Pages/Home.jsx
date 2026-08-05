@@ -43,6 +43,10 @@ export default function Home() {
     const targetSales = apiData.total_sales_target || 0;
     const salesProgress = targetSales > 0 ? (achievedSales / targetSales) * 100 : 0;
 
+    const achievedPoints = apiData.targetAchievedPoints || 0;
+    const targetPoints = apiData.total_points_target || 0;
+    const pointsProgress = targetPoints > 0 ? (achievedPoints / targetPoints) * 100 : 0;
+
     const stats = {
         sales: apiData.sales || 0,
         delivered: apiData.delivered || 0,
@@ -138,7 +142,7 @@ export default function Home() {
             </div>
 
             {/* --- Targets & Achievements (Progress Section) --- */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                 {/* Visits Target */}
                 <Card className="border-slate-200/80 shadow-sm">
@@ -180,6 +184,28 @@ export default function Home() {
                         <Progress value={salesProgress} className="h-2 bg-secondary/20 indicator-primary" />
                         <p className="text-xs text-slate-400 mt-3 flex justify-end">
                             {salesProgress.toFixed(1)}% Achieved
+                        </p>
+                    </CardContent>
+                </Card>
+
+                {/* Points Target */}
+                <Card className="border-slate-200/80 shadow-sm">
+                    <CardContent className="pt-6">
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <p className="text-sm font-medium text-secondary">Points Target</p>
+                                <div className="flex items-baseline gap-2 mt-1">
+                                    <span className="text-3xl font-bold text-slate-900">{achievedPoints}</span>
+                                    <span className="text-sm text-slate-500">/ {targetPoints}</span>
+                                </div>
+                            </div>
+                            <div className="p-3 bg-primary/10 rounded-xl">
+                                <Target className="w-6 h-6 text-primary" />
+                            </div>
+                        </div>
+                        <Progress value={pointsProgress} className="h-2 bg-secondary/20 indicator-primary" />
+                        <p className="text-xs text-slate-400 mt-3 flex justify-end">
+                            {pointsProgress.toFixed(1)}% Achieved
                         </p>
                     </CardContent>
                 </Card>

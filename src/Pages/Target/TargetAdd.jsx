@@ -127,6 +127,7 @@ const TargetAdd = () => {
                                                 <SelectContent>
                                                     <SelectItem value="visit">Visit</SelectItem>
                                                     <SelectItem value="sales">Sales</SelectItem>
+                                                    <SelectItem value="points">Points</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         )}

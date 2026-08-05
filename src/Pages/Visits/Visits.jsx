@@ -34,7 +34,7 @@ const Visits = () => {
     
     // ---- Month & Year Filter States ----
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
-    const [selectedMonth, setSelectedMonth] = useState("");
+    const [selectedMonths, setSelectedMonths] = useState([]);
 
     const months = [
         { value: "01", label: "Jan" },
@@ -60,7 +60,9 @@ const Visits = () => {
 
     // ---- Get Products Data ----
     const { data: productsRes } = useGet("/api/admin/products");
-    const productsList = productsRes?.data?.products || productsRes?.products || productsRes?.data || [];
+    const productsList = Array.isArray(productsRes?.data?.allProducts) ? productsRes.data.allProducts : 
+                         Array.isArray(productsRes?.allProducts) ? productsRes.allProducts : 
+                         Array.isArray(productsRes?.data?.products) ? productsRes.data.products : [];
 
     // ---- Debounce Search Logic ----
     useEffect(() => {
@@ -85,14 +87,9 @@ const Visits = () => {
         queryParams.append("search", debouncedSearch.trim());
     }
 
-    if (selectedMonth && selectedYear) {
-        // حساب أول يوم وآخر يوم في الشهر المُختار
-        const startDate = `${selectedYear}-${selectedMonth}-01`;
-        const lastDay = new Date(parseInt(selectedYear), parseInt(selectedMonth), 0).getDate();
-        const endDate = `${selectedYear}-${selectedMonth}-${lastDay}`;
-        
-        queryParams.append("from", startDate);
-        queryParams.append("to", endDate);
+    if (selectedMonths.length > 0 && selectedYear) {
+        queryParams.append("months", selectedMonths.join(','));
+        queryParams.append("year", selectedYear);
     }
 
     const visitsApiUrl = `/api/admin/visits?${queryParams.toString()}`;
@@ -121,6 +118,7 @@ const Visits = () => {
     const { mutate: updateVisit } = useMutation();
 
     const [visitToDelete, setVisitToDelete] = useState(null);
+    const [selectedDuration, setSelectedDuration] = useState("");
 
     const handleDeleteClick = (visit) => {
         setVisitToDelete(visit);
@@ -160,7 +158,7 @@ const Visits = () => {
     };
 
     const handleSalesStatusChange = async (visit, newStatus) => {
-        if (newStatus === "sales") {
+        if (newStatus === "sales" || newStatus === "delivered") {
             setPendingSalesStatusVisit(visit);
             setSelectedProductId(visit.product_id || "");
             setProductModalOpen(true);
@@ -183,14 +181,14 @@ const Visits = () => {
     };
 
     const confirmProductEnrollment = async () => {
-        if (!pendingSalesStatusVisit || !selectedProductId) {
-            toast.error("Please select a product");
+        if (!pendingSalesStatusVisit || !selectedProductId || !selectedDuration) {
+            toast?.error?.("Please select a product and duration");
             return;
         }
         const result = await updateVisit({
             method: "PUT",
             url: `/api/admin/visits/${pendingSalesStatusVisit.id}`,
-            data: { status: "sales", product_id: selectedProductId },
+            data: { status: "sales", product_id: selectedProductId, duration: selectedDuration },
         });
         
         if (result.success) {
@@ -376,20 +374,30 @@ const Visits = () => {
                 
                 <div className="flex flex-wrap gap-2">
                     <button
-                        className={`px-3 py-1.5 text-sm rounded-md transition-colors ${selectedMonth === "" ? "bg-red-500 text-white font-medium shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"}`}
-                        onClick={() => { setSelectedMonth(""); setPage(1); }}
+                        className={`px-3 py-1.5 text-sm rounded-md transition-colors ${selectedMonths.length === 0 ? "bg-red-500 text-white font-medium shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"}`}
+                        onClick={() => { setSelectedMonths([]); setPage(1); }}
                     >
                         All Months
                     </button>
-                    {months.map(m => (
-                        <button
-                            key={m.value}
-                            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${selectedMonth === m.value ? "bg-red-500 text-white font-medium shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"}`}
-                            onClick={() => { setSelectedMonth(m.value); setPage(1); }}
-                        >
-                            {m.label}
-                        </button>
-                    ))}
+                    {months.map(m => {
+                        const isSelected = selectedMonths.includes(m.value);
+                        return (
+                            <button
+                                key={m.value}
+                                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${isSelected ? "bg-red-500 text-white font-medium shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"}`}
+                                onClick={() => { 
+                                    if (isSelected) {
+                                        setSelectedMonths(selectedMonths.filter(x => x !== m.value));
+                                    } else {
+                                        setSelectedMonths([...selectedMonths, m.value]);
+                                    }
+                                    setPage(1);
+                                }}
+                            >
+                                {m.label}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
@@ -486,6 +494,25 @@ const Visits = () => {
                                 <option key={p.id} value={p.id}>{p.name}</option>
                             ))}
                         </select>
+                        {selectedProductId && (
+                            <select 
+                                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mt-4"
+                                value={selectedDuration}
+                                onChange={(e) => setSelectedDuration(e.target.value)}
+                            >
+                                <option value="">Select Duration</option>
+                                { (() => {
+                                    const product = productsList.find(p => p.id === selectedProductId);
+                                    let pointsData = product?.points || [];
+                                    if (typeof pointsData === 'string') {
+                                        try { pointsData = JSON.parse(pointsData); } catch(e) { pointsData = []; }
+                                    }
+                                    return pointsData.map(p => (
+                                        <option key={p.duration} value={p.duration}>{p.duration}</option>
+                                    ));
+                                })() }
+                            </select>
+                        )}
                     </div>
                     <div className="flex justify-end gap-2">
                         <Button variant="outline" onClick={() => setProductModalOpen(false)}>Cancel</Button>

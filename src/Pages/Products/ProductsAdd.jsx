@@ -44,18 +44,27 @@ const ProductsAdd = () => {
                     ? {
                         id: fetchedData.id || id,
                         name: fetchedData.name,
+                        feez: fetchedData.feez || 0,
+                        description: fetchedData.description || "",
+                        demo_link: fetchedData.demo_link || "",
                         points: fetchedData.points?.length > 0 
-                            ? fetchedData.points 
+                            ? (typeof fetchedData.points === 'string' ? JSON.parse(fetchedData.points) : fetchedData.points) 
                             : [{ point: 0, duration: "monthly" }],
                     }
                     : {
                         name: "",
+                        feez: 0,
+                        description: "",
+                        demo_link: "",
                         points: [{ point: 0, duration: "monthly" }],
                     }
             }
             transformPayload={(data) => {
                 return {
                     name: data.name || "",
+                    feez: Number(data.feez) || 0,
+                    description: data.description || "",
+                    demo_link: data.demo_link || "",
                     points: data.points?.map((item) => ({
                         point: Number(item.point),
                         duration: item.duration,
@@ -95,6 +104,31 @@ const ProductsAdd = () => {
                                     {errors.name && (
                                         <span className="text-xs text-red-500">{errors.name.message}</span>
                                     )}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium">Feez</Label>
+                                    <Input
+                                        type="number"
+                                        {...register("feez", { valueAsNumber: true })}
+                                        placeholder="Product feez"
+                                        className="h-10 text-sm rounded-md"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium">Demo Link</Label>
+                                    <Input
+                                        {...register("demo_link")}
+                                        placeholder="Demo URL"
+                                        className="h-10 text-sm rounded-md"
+                                    />
+                                </div>
+                                <div className="space-y-2 col-span-1 sm:col-span-2">
+                                    <Label className="text-sm font-medium">Description</Label>
+                                    <Input
+                                        {...register("description")}
+                                        placeholder="Product description"
+                                        className="h-10 text-sm rounded-md"
+                                    />
                                 </div>
                             </div>
                         </div>
