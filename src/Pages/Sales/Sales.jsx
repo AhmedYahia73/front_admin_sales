@@ -335,120 +335,124 @@ const Visits = () => {
 
     return (
         <div className="container mx-auto py-10">
-            {/* Total Sales Overview */}
-            <div className="mb-6 bg-gradient-to-r from-green-600 to-green-800 p-6 rounded-2xl shadow-lg flex items-center justify-between text-white">
-                <div>
-                    <h2 className="text-sm font-medium uppercase tracking-wider text-green-100 mb-1">Total Sales</h2>
-                    <p className="text-4xl font-extrabold">{paginationData.total}</p>
-                </div>
-                <div className="bg-white/20 p-4 rounded-full">
-                    <MapPin className="h-8 w-8 text-white" />
-                </div>
-            </div>
-
-            {/* Year & Month Filter */}
-            <div className="mb-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col gap-4">
-                <div className="flex items-center gap-3">
-                    <label htmlFor="year-filter" className="text-sm font-semibold text-gray-700">
-                        Filter by Year:
-                    </label>
-                    <select
-                        id="year-filter"
-                        className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[120px]"
-                        value={selectedYear}
-                        onChange={(e) => {
-                            setSelectedYear(e.target.value);
-                            setPage(1);
-                        }}
-                    >
-                        {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map((y) => (
-                            <option key={y} value={y}>{y}</option>
-                        ))}
-                    </select>
-                </div>
-                
-                <div className="flex flex-wrap gap-2">
-                    <button
-                        className={`px-3 py-1.5 text-sm rounded-md transition-colors ${selectedMonths.length === 0 ? "bg-red-500 text-white font-medium shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"}`}
-                        onClick={() => { setSelectedMonths([]); setPage(1); }}
-                    >
-                        All Months
-                    </button>
-                    {months.map(m => {
-                        const isSelected = selectedMonths.includes(m.value);
-                        return (
-                            <button
-                                key={m.value}
-                                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${isSelected ? "bg-red-500 text-white font-medium shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"}`}
-                                onClick={() => { 
-                                    if (isSelected) {
-                                        setSelectedMonths(selectedMonths.filter(x => x !== m.value));
-                                    } else {
-                                        setSelectedMonths([...selectedMonths, m.value]);
-                                    }
+            <div className="flex flex-col xl:flex-row gap-6 mb-6">
+                {/* Left Side: Filters */}
+                <div className="flex-1 flex flex-col gap-4">
+                    {/* Year & Month Filter */}
+                    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col gap-4">
+                        <div className="flex items-center gap-3">
+                            <label htmlFor="year-filter" className="text-sm font-semibold text-gray-700">
+                                Filter by Year:
+                            </label>
+                            <select
+                                id="year-filter"
+                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[120px]"
+                                value={selectedYear}
+                                onChange={(e) => {
+                                    setSelectedYear(e.target.value);
                                     setPage(1);
                                 }}
                             >
-                                {m.label}
+                                {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+                                    <option key={y} value={y}>{y}</option>
+                                ))}
+                            </select>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2">
+                            <button
+                                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${selectedMonths.length === 0 ? "bg-red-500 text-white font-medium shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"}`}
+                                onClick={() => { setSelectedMonths([]); setPage(1); }}
+                            >
+                                All Months
                             </button>
-                        );
-                    })}
-                </div>
-            </div>
+                            {months.map(m => {
+                                const isSelected = selectedMonths.includes(m.value);
+                                return (
+                                    <button
+                                        key={m.value}
+                                        className={`px-3 py-1.5 text-sm rounded-md transition-colors ${isSelected ? "bg-red-500 text-white font-medium shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"}`}
+                                        onClick={() => { 
+                                            if (isSelected) {
+                                                setSelectedMonths(selectedMonths.filter(x => x !== m.value));
+                                            } else {
+                                                setSelectedMonths([...selectedMonths, m.value]);
+                                            }
+                                            setPage(1);
+                                        }}
+                                    >
+                                        {m.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
 
-            {/* Controls Section: Filter & Search */}
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                
-                {/* Sales Filter */}
-                <div className="flex items-center gap-3">
-                    <label htmlFor="sales-filter" className="text-sm font-semibold text-gray-700">
-                        Filter by Sales:
-                    </label>
-                    <select
-                        id="sales-filter"
-                        className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[200px]"
-                        value={selectedSalesFilter}
-                        onChange={handleFilterChange}
-                    >
-                        <option value="">All Sales (Show All)</option>
-                        {salesList.map((s) => (
-                            <option key={s.id} value={s.id}>
-                                {s.name}
-                            </option>
-                        ))}
-                    </select>
+                    {/* Controls Section: Filter & Search */}
+                    <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                        {/* Sales Filter */}
+                        <div className="flex items-center gap-3">
+                            <label htmlFor="sales-filter" className="text-sm font-semibold text-gray-700">
+                                Filter by Sales:
+                            </label>
+                            <select
+                                id="sales-filter"
+                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[200px]"
+                                value={selectedSalesFilter}
+                                onChange={handleFilterChange}
+                            >
+                                <option value="">All Sales (Show All)</option>
+                                {salesList.map((s) => (
+                                    <option key={s.id} value={s.id}>
+                                        {s.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Status Filter */}
+                        <div className="flex items-center gap-3">
+                            <label htmlFor="status-filter" className="text-sm font-semibold text-gray-700">
+                                Filter by Status:
+                            </label>
+                            <select
+                                id="status-filter"
+                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[200px]"
+                                value={selectedStatusFilter}
+                                onChange={handleStatusFilterChange}
+                            >
+                                <option value="">All Statuses (Show All)</option>
+                                {statusList.map((s) => (
+                                    <option key={s.id} value={s.id}>
+                                        {s.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Search Input (Backend Search) */}
+                        <div className="flex items-center gap-2 relative min-w-[250px]">
+                            <Search className="absolute left-3 h-4 w-4 text-gray-400" />
+                            <Input
+                                type="text"
+                                placeholder="Search sales by name, phone or address..."
+                                className="pl-9"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                    </div>
                 </div>
 
-                {/* Status Filter */}
-                <div className="flex items-center gap-3">
-                    <label htmlFor="status-filter" className="text-sm font-semibold text-gray-700">
-                        Filter by Status:
-                    </label>
-                    <select
-                        id="status-filter"
-                        className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[200px]"
-                        value={selectedStatusFilter}
-                        onChange={handleStatusFilterChange}
-                    >
-                        <option value="">All Statuses (Show All)</option>
-                        {statusList.map((s) => (
-                            <option key={s.id} value={s.id}>
-                                {s.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                {/* Search Input (Backend Search) */}
-                <div className="flex items-center gap-2 relative min-w-[250px]">
-                    <Search className="absolute left-3 h-4 w-4 text-gray-400" />
-                    <Input
-                        type="text"
-                        placeholder="Search visits by name, phone or address..."
-                        className="pl-9"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+                {/* Right Side: Total Sales Overview */}
+                <div className="shrink-0 flex items-stretch">
+                    <div className="bg-gradient-to-br from-red-500 to-red-600 p-6 rounded-2xl shadow-lg flex flex-col items-center justify-center text-white border border-red-400/50 transition-transform hover:scale-[1.02] min-h-full" style={{ width: 'calc(var(--spacing) * 55)' }}>
+                        <div className="bg-white/20 p-4 rounded-full mb-4 shadow-inner">
+                            <MapPin className="h-8 w-8 text-white" />
+                        </div>
+                        <p className="text-5xl font-extrabold leading-none mb-2">{paginationData.total}</p>
+                        <h2 className="text-sm font-semibold uppercase tracking-wider text-red-100 text-center">Total Sales</h2>
+                    </div>
                 </div>
             </div>
 
