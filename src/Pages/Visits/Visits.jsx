@@ -230,12 +230,7 @@ const Visits = () => {
         { accessorKey: "name", header: "Name" },
         { accessorKey: "address", header: "Address" },
         { accessorKey: "phone", header: "Phone" },
-        { accessorKey: "createdAt", header: "Date" },
-        {
-            accessorKey: "product",
-            header: "Product",
-            render: (row) => row.product?.name || row.product_name || "-",
-        },
+        { accessorKey: "createdAt", header: "Date" }, 
         {
             accessorKey: "visit_status",
             header: "Status",
