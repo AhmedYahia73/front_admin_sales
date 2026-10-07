@@ -228,8 +228,18 @@ const Visits = () => {
 
     const columns = [
         { accessorKey: "name", header: "Name" },
+        { 
+            accessorKey: "owner_name", 
+            header: "Owner Name",
+            render: (row) => row.owner_name || <span className="text-gray-400">-</span>
+        },
         { accessorKey: "address", header: "Address" },
         { accessorKey: "phone", header: "Phone" },
+        { 
+            accessorKey: "owner_phone", 
+            header: "Owner Phone",
+            render: (row) => row.owner_phone || <span className="text-gray-400">-</span>
+        },
         { accessorKey: "createdAt", header: "Date" }, 
         {
             accessorKey: "visit_status",
