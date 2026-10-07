@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button';
 import { useMutation } from '@/hooks/useMutation';
 import { toast } from 'sonner';
 
-// استيراد اللوجو (تأكدي من صحة المسار في مشروعك)
-import logo from '@/assets/logo.jpg'; 
+// استيراد اللوجو
+import logo from '@/assets/logo.png';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -80,7 +80,7 @@ const handleSubmit = async (e) => {
             transition={{ delay: 0.1, duration: 0.3 }}
             className="flex items-center justify-center mx-auto mb-4"
           >
-            <img src={logo} alt="Company Logo" className="w-20 h-20 object-contain" />
+            <img src={logo} alt="Keeto Logo" className="w-36 h-16 object-contain" />
           </motion.div>
           <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1.5">
             Sign in to manage your sales dashboard
@@ -98,7 +98,7 @@ const handleSubmit = async (e) => {
               <Input 
                 type="email" 
                 name="email"
-                placeholder="name@systego.net"
+                placeholder="name@keeto.net"
                 className="pl-10 h-11 bg-zinc-50/50 dark:bg-zinc-950/50 focus-visible:ring-primary/50"
                 value={formData.email}
                 onChange={handleChange}

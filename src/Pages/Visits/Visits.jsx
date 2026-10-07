@@ -382,7 +382,7 @@ const Visits = () => {
                         
                         <div className="flex flex-wrap gap-2">
                             <button
-                                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${selectedMonths.length === 0 ? "bg-red-500 text-white font-medium shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"}`}
+                                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${selectedMonths.length === 0 ? "bg-primary text-primary-foreground font-semibold shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"}`}
                                 onClick={() => { setSelectedMonths([]); setPage(1); }}
                             >
                                 All Months
@@ -392,7 +392,7 @@ const Visits = () => {
                                 return (
                                     <button
                                         key={m.value}
-                                        className={`px-3 py-1.5 text-sm rounded-md transition-colors ${isSelected ? "bg-red-500 text-white font-medium shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"}`}
+                                        className={`px-3 py-1.5 text-sm rounded-md transition-colors ${isSelected ? "bg-primary text-primary-foreground font-semibold shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"}`}
                                         onClick={() => { 
                                             if (isSelected) {
                                                 setSelectedMonths(selectedMonths.filter(x => x !== m.value));
@@ -467,12 +467,12 @@ const Visits = () => {
 
                 {/* Right Side: Total Visits Overview */}
                 <div className="shrink-0 flex items-stretch">
-                    <div className="bg-gradient-to-br from-red-500 to-red-600 p-6 rounded-2xl shadow-lg flex flex-col items-center justify-center text-white border border-red-400/50 transition-transform hover:scale-[1.02] min-h-full" style={{ width: 'calc(var(--spacing) * 55)' }}>
-                        <div className="bg-white/20 p-4 rounded-full mb-4 shadow-inner">
-                            <MapPin className="h-8 w-8 text-white" />
+                    <div className="bg-gradient-to-br from-yellow-400 to-amber-500 p-6 rounded-2xl shadow-lg flex flex-col items-center justify-center text-zinc-950 border border-yellow-300/60 transition-transform hover:scale-[1.02] min-h-full" style={{ width: 'calc(var(--spacing) * 55)' }}>
+                        <div className="bg-black/10 p-4 rounded-full mb-4 shadow-inner">
+                            <MapPin className="h-8 w-8 text-zinc-950" />
                         </div>
                         <p className="text-5xl font-extrabold leading-none mb-2">{paginationData.total}</p>
-                        <h2 className="text-sm font-semibold uppercase tracking-wider text-red-100 text-center">Total Visits</h2>
+                        <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-900 text-center">Total Visits</h2>
                     </div>
                 </div>
             </div>

@@ -384,7 +384,7 @@ const AddPage = ({
                               alt="Preview"
                               className="w-full h-full object-cover"
                             />
-                            <div className="absolute top-0 right-0 bg-primary text-white text-[10px] px-2 py-1">
+                            <div className="absolute top-0 right-0 bg-primary text-primary-foreground font-semibold text-[10px] px-2 py-1">
                               {"currentImage"}
                             </div>
                           </div>

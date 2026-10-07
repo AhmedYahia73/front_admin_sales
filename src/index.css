@@ -57,11 +57,11 @@
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
     
-    /* تم التعديل هنا ليأخذ ألوان اللوجو بصيغة HSL الكاملة */
-    --primary: hsl(358, 79%, 51%);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: hsl(216, 2%, 51%);
-    --secondary-foreground: oklch(0.985 0 0);
+    /* تم التعديل ليأخذ لون لوجو Keeto الأصفر المتناسق */
+    --primary: hsl(54, 97%, 49%);
+    --primary-foreground: oklch(0.145 0 0);
+    --secondary: hsl(48, 96%, 89%);
+    --secondary-foreground: oklch(0.145 0 0);
     
     --muted: oklch(0.97 0 0);
     --muted-foreground: oklch(0.556 0 0);
@@ -70,8 +70,8 @@
     --destructive: oklch(0.577 0.245 27.325);
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
+    --ring: hsl(54, 97%, 49%);
+    --chart-1: hsl(54, 97%, 49%);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
     --chart-4: oklch(0.371 0 0);
@@ -80,14 +80,14 @@
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
     
-    /* يمكن أيضاً تطبيق اللون الأساسي على الشريط الجانبي إذا رغبتِ */
-    --sidebar-primary: hsl(358, 79%, 51%);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
+    /* اللون الأساسي للشريط الجانبي */
+    --sidebar-primary: hsl(54, 97%, 49%);
+    --sidebar-primary-foreground: oklch(0.145 0 0);
     
     --sidebar-accent: oklch(0.97 0 0);
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    --sidebar-ring: hsl(54, 97%, 49%);
 }
 
 .dark {
@@ -98,10 +98,10 @@
     --popover: oklch(0.205 0 0);
     --popover-foreground: oklch(0.985 0 0);
     
-    /* تم التعديل هنا للوضع الليلي */
-    --primary: hsl(358, 79%, 51%);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: hsl(216, 2%, 51%);
+    /* الوضع الليلي للوجو Keeto */
+    --primary: hsl(54, 97%, 49%);
+    --primary-foreground: oklch(0.145 0 0);
+    --secondary: hsl(48, 96%, 20%);
     --secondary-foreground: oklch(0.985 0 0);
     
     --muted: oklch(0.269 0 0);
@@ -111,8 +111,8 @@
     --destructive: oklch(0.704 0.191 22.216);
     --border: oklch(1 0 0 / 10%);
     --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
+    --ring: hsl(54, 97%, 49%);
+    --chart-1: hsl(54, 97%, 49%);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
     --chart-4: oklch(0.371 0 0);
@@ -121,13 +121,13 @@
     --sidebar-foreground: oklch(0.985 0 0);
     
     /* للوضع الليلي في الشريط الجانبي */
-    --sidebar-primary: hsl(358, 79%, 51%);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-primary: hsl(54, 97%, 49%);
+    --sidebar-primary-foreground: oklch(0.145 0 0);
     
     --sidebar-accent: oklch(0.269 0 0);
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --sidebar-ring: hsl(54, 97%, 49%);
 }
 
 @layer base {

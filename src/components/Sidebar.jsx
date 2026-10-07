@@ -52,7 +52,7 @@ export const Sidebar = ({ isOpen, toggleSidebar }) => {
       {/* زر التبديل واللوجو */}
       <div className="p-6 flex items-center justify-between cursor-pointer" onClick={toggleSidebar}>
         {isOpen ? (
-          <h1 className="text-xl font-bold text-primary truncate">Systego Sales</h1>
+          <h1 className="text-xl font-bold text-primary truncate">Keeto Sales</h1>
         ) : (
           <div className="w-full flex justify-center text-primary">
             <Menu size={24} />
@@ -106,7 +106,7 @@ export const Sidebar = ({ isOpen, toggleSidebar }) => {
                           <div className="flex flex-1 items-center justify-between truncate">
                             <span>{subItem.name}</span>
                             {badgeCount !== null && badgeCount !== undefined && (
-                              <span className="bg-primary text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                              <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
                                 {loading ? '...' : badgeCount}
                               </span>
                             )}
@@ -143,7 +143,7 @@ export const Sidebar = ({ isOpen, toggleSidebar }) => {
                   <span>{item.name}</span>
 
                   {badgeCount !== null && badgeCount !== undefined && (
-                    <span className="bg-primary text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                    <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
                       {loading ? '...' : badgeCount}
                     </span>
                   )}
