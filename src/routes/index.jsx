@@ -22,6 +22,8 @@ import VisitStatusAdd from '@/Pages/VisitStatus/VisitStatusAdd';
 import VisitStatus from '@/Pages/VisitStatus/VisitStatus';
 import Products from '@/Pages/Products/Products';
 import ProductsAdd from '@/Pages/Products/ProductsAdd';
+import Leads from '@/Pages/Leads/Leads';
+import LeadsAdd from '@/Pages/Leads/LeadsAdd';
 import PendingRequests from '@/Pages/StatusRequests/Requests';
 import HistoryRequests from '@/Pages/StatusRequests/HistoryRequests';
 
@@ -63,6 +65,11 @@ export const router = createBrowserRouter([
       { path: 'visits', element: <Visits /> },
       { path: 'visits/add', element: <VisitsAdd /> },
       { path: 'visits/:id/edit', element: <VisitsAdd /> },
+
+      // leads
+      { path: 'leads', element: <Leads /> },
+      { path: 'leads/add', element: <LeadsAdd /> },
+      { path: 'leads/:id/edit', element: <LeadsAdd /> },
 
       // sales man
       { path: 'sales-man', element: <SalesMan /> },

@@ -4,7 +4,7 @@ import { DataTable } from "@/components/DataTable";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { useGet } from "@/hooks/useGet";
 import { useMutation } from "@/hooks/useMutation";
-import { MapPin, StickyNote, Search } from "lucide-react";
+import { MapPin, StickyNote, Search, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -57,7 +57,9 @@ const Visits = () => {
     // ---- Product Selection States ----
     const [productModalOpen, setProductModalOpen] = useState(false);
     const [pendingSalesStatusVisit, setPendingSalesStatusVisit] = useState(null);
-    const [selectedProductId, setSelectedProductId] = useState("");
+    const [selectedProducts, setSelectedProducts] = useState([
+        { product_id: "", duration: "" },
+    ]);
 
     // ---- Get Products Data ----
     const { data: productsRes } = useGet("/api/admin/products");
@@ -127,7 +129,6 @@ const Visits = () => {
     const { mutate: updateVisit } = useMutation();
 
     const [visitToDelete, setVisitToDelete] = useState(null);
-    const [selectedDuration, setSelectedDuration] = useState("");
 
     const handleDeleteClick = (visit) => {
         setVisitToDelete(visit);
@@ -168,8 +169,14 @@ const Visits = () => {
 
     const handleSalesStatusChange = async (visit, newStatus) => {
         if (newStatus === "sales" || newStatus === "delivered") {
-            setPendingSalesStatusVisit(visit);
-            setSelectedProductId(visit.product_id || "");
+            setPendingSalesStatusVisit({ visit, targetStatus: newStatus });
+            const existingProducts = Array.isArray(visit.products) && visit.products.length > 0
+                ? visit.products.map((p) => ({
+                    product_id: p.product_id || "",
+                    duration: p.duration || "",
+                }))
+                : [{ product_id: "", duration: "" }];
+            setSelectedProducts(existingProducts);
             setProductModalOpen(true);
             return;
         }
@@ -190,23 +197,28 @@ const Visits = () => {
     };
 
     const confirmProductEnrollment = async () => {
-        if (!pendingSalesStatusVisit || !selectedProductId || !selectedDuration) {
-            toast?.error?.("Please select a product and duration");
+        const validProducts = selectedProducts.filter(
+            (p) => p.product_id && p.duration
+        );
+        if (!pendingSalesStatusVisit || validProducts.length === 0) {
+            toast?.error?.("Please select at least one product and duration");
             return;
         }
+        const visitObj = pendingSalesStatusVisit.visit || pendingSalesStatusVisit;
+        const targetStatus = pendingSalesStatusVisit.targetStatus || "sales";
         const result = await updateVisit({
             method: "PUT",
-            url: `/api/admin/visits/${pendingSalesStatusVisit.id}`,
-            data: { status: "sales", product_id: selectedProductId, duration: selectedDuration },
+            url: `/api/admin/visits/${visitObj.id}`,
+            data: { status: targetStatus, products: validProducts },
         });
         
         if (result.success) {
-            toast.success("Status updated and product enrolled successfully");
+            toast.success("Status updated and products enrolled successfully");
             setProductModalOpen(false);
             setPendingSalesStatusVisit(null);
             refresh?.();
         } else {
-            toast.error("Failed to update status and enroll product");
+            toast.error("Failed to update status and enroll products");
         }
     };
 
@@ -239,6 +251,28 @@ const Visits = () => {
             accessorKey: "owner_phone", 
             header: "Owner Phone",
             render: (row) => row.owner_phone || <span className="text-gray-400">-</span>
+        },
+        {
+            accessorKey: "product",
+            header: "Products",
+            render: (row) => {
+                if (Array.isArray(row.products) && row.products.length > 0) {
+                    return (
+                        <div className="flex flex-wrap gap-1">
+                            {row.products.map((p, idx) => (
+                                <span
+                                    key={idx}
+                                    className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-medium border border-blue-200"
+                                >
+                                    {p.product_name || p.product_id}
+                                    {p.duration ? ` (${p.duration})` : ""}
+                                </span>
+                            ))}
+                        </div>
+                    );
+                }
+                return row.product || <span className="text-gray-400">-</span>;
+            },
         },
         { accessorKey: "createdAt", header: "Date" }, 
         {
@@ -524,45 +558,114 @@ const Visits = () => {
                 </div>
             </div>
 
-            {/* Product Enrollment Dialog */}
+            {/* Product Enrollment Dialog (Multi-Products) */}
             <Dialog open={productModalOpen} onOpenChange={setProductModalOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
-                        <DialogTitle>Enroll Product for Sales</DialogTitle>
+                        <DialogTitle>Enroll Products for Sales</DialogTitle>
                         <DialogDescription>
-                            Please select a product to enroll this visit as a sale.
+                            Select one or more products and their durations to calculate points for this sale.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="py-4">
-                        <select 
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            value={selectedProductId}
-                            onChange={(e) => setSelectedProductId(e.target.value)}
+                    <div className="py-4 space-y-3 max-h-[60vh] overflow-y-auto">
+                        {selectedProducts.map((item, idx) => {
+                            const productObj = productsList.find(
+                                (p) => p.id === item.product_id
+                            );
+                            let pointsData = productObj?.points || [];
+                            if (typeof pointsData === "string") {
+                                try {
+                                    pointsData = JSON.parse(pointsData);
+                                } catch {
+                                    pointsData = [];
+                                }
+                            }
+
+                            return (
+                                <div
+                                    key={idx}
+                                    className="flex items-center gap-2 bg-gray-50 p-2.5 rounded-md border"
+                                >
+                                    <select
+                                        className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                                        value={item.product_id}
+                                        onChange={(e) => {
+                                            const updated = [...selectedProducts];
+                                            updated[idx] = {
+                                                product_id: e.target.value,
+                                                duration: "",
+                                            };
+                                            setSelectedProducts(updated);
+                                        }}
+                                    >
+                                        <option value="">Select Product</option>
+                                        {productsList.map((p) => (
+                                            <option key={p.id} value={p.id}>
+                                                {p.name}
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    <select
+                                        className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                                        value={item.duration}
+                                        disabled={!item.product_id}
+                                        onChange={(e) => {
+                                            const updated = [...selectedProducts];
+                                            updated[idx] = {
+                                                ...updated[idx],
+                                                duration: e.target.value,
+                                            };
+                                            setSelectedProducts(updated);
+                                        }}
+                                    >
+                                        <option value="">Select Duration</option>
+                                        {Array.isArray(pointsData) &&
+                                            pointsData.map((p) => (
+                                                <option
+                                                    key={p.duration}
+                                                    value={p.duration}
+                                                >
+                                                    {p.duration} ({p.point} pts)
+                                                </option>
+                                            ))}
+                                    </select>
+
+                                    {selectedProducts.length > 1 && (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="text-red-500 hover:text-red-700"
+                                            onClick={() =>
+                                                setSelectedProducts(
+                                                    selectedProducts.filter(
+                                                        (_, i) => i !== idx
+                                                    )
+                                                )
+                                            }
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    )}
+                                </div>
+                            );
+                        })}
+
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                                setSelectedProducts([
+                                    ...selectedProducts,
+                                    { product_id: "", duration: "" },
+                                ])
+                            }
+                            className="w-full flex items-center justify-center gap-1"
                         >
-                            <option value="">Select a Product</option>
-                            {productsList.map(p => (
-                                <option key={p.id} value={p.id}>{p.name}</option>
-                            ))}
-                        </select>
-                        {selectedProductId && (
-                            <select 
-                                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mt-4"
-                                value={selectedDuration}
-                                onChange={(e) => setSelectedDuration(e.target.value)}
-                            >
-                                <option value="">Select Duration</option>
-                                { (() => {
-                                    const product = productsList.find(p => p.id === selectedProductId);
-                                    let pointsData = product?.points || [];
-                                    if (typeof pointsData === 'string') {
-                                        try { pointsData = JSON.parse(pointsData); } catch(e) { pointsData = []; }
-                                    }
-                                    return pointsData.map(p => (
-                                        <option key={p.duration} value={p.duration}>{p.duration}</option>
-                                    ));
-                                })() }
-                            </select>
-                        )}
+                            <Plus className="h-4 w-4" /> Add Another Product
+                        </Button>
                     </div>
                     <div className="flex justify-end gap-2">
                         <Button variant="outline" onClick={() => setProductModalOpen(false)}>Cancel</Button>

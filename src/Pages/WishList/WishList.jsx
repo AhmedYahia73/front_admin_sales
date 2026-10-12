@@ -4,10 +4,23 @@ import { DataTable } from "@/components/DataTable";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { useGet } from "@/hooks/useGet";
 import { useMutation } from "@/hooks/useMutation";
-import { Search } from "lucide-react";
+import { Search, ArrowRightLeft, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog";
+import MapComponent from "@/components/MapComponent";
+import { getDurationsForProduct } from "@/Pages/Visits/VisitsAdd";
 import { toast } from "sonner";
+
+const DEFAULT_CENTER = { lat: 30.0444, lng: 31.2357 };
 
 const WishList = () => {
     const navigate = useNavigate();
@@ -41,17 +54,151 @@ const WishList = () => {
     // ---- Fetch Data ----
     const { data: response, loading: isLoading, refresh } = useGet(wishListApiUrl);
 
-    // استخراج البيانات والـ Pagination حسب الـ Schema (تعتمد على response مباشرة أو response.data)
     const wish_list = response?.data?.allWishLists || response?.allWishLists || [];
     const paginationData = response?.data?.pagination || response?.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 };
 
+    // ---- Fetch Lists (sales, visit_status, products) ----
+    const { data: listsResponse } = useGet("/api/admin/wish_list/lists");
+    const visitStatusList =
+        listsResponse?.visit_status || listsResponse?.data?.visit_status || [];
+    const productsList =
+        listsResponse?.products || listsResponse?.data?.products || [];
+
     const [wishListToDelete, setWishListToDelete] = useState(null);
     const { mutate: deleteWishList, loading: isDeleting } = useMutation();
+
+    // ---- Convert WishList to Visit State ----
+    const [wishListToConvert, setWishListToConvert] = useState(null);
+    const [convertForm, setConvertForm] = useState({
+        phone: "",
+        status_id: "",
+        owner_name: "",
+        owner_phone: "",
+        notes: "",
+        address: "",
+        lat: DEFAULT_CENTER.lat,
+        lng: DEFAULT_CENTER.lng,
+        products: [],
+    });
+    const { mutate: convertWishList, loading: isConverting } = useMutation();
+
+    const handleOpenConvertModal = (row) => {
+        setWishListToConvert(row);
+        setConvertForm({
+            phone: "",
+            status_id: visitStatusList?.[0]?.id || "",
+            owner_name: "",
+            owner_phone: "",
+            notes: row.description || "",
+            address: "",
+            lat: DEFAULT_CENTER.lat,
+            lng: DEFAULT_CENTER.lng,
+            products: [],
+        });
+    };
+
+    const handleAddProduct = () => {
+        setConvertForm((prev) => ({
+            ...prev,
+            products: [...prev.products, { product_id: "", duration: "" }],
+        }));
+    };
+
+    const handleRemoveProduct = (index) => {
+        setConvertForm((prev) => ({
+            ...prev,
+            products: prev.products.filter((_, i) => i !== index),
+        }));
+    };
+
+    const handleProductChange = (index, field, value) => {
+        setConvertForm((prev) => {
+            const updated = [...prev.products];
+            updated[index] = {
+                ...updated[index],
+                [field]: value,
+                ...(field === "product_id" ? { duration: "" } : {}),
+            };
+            return { ...prev, products: updated };
+        });
+    };
+
+    const handleConvertConfirm = async () => {
+        if (!wishListToConvert) return;
+
+        if (!convertForm.phone.trim()) {
+            toast.error("Phone is required");
+            return;
+        }
+        if (!convertForm.status_id) {
+            toast.error("Please select a visit status");
+            return;
+        }
+        if (!convertForm.address.trim()) {
+            toast.error("Address is required (select on map or type address)");
+            return;
+        }
+
+        for (const p of convertForm.products) {
+            if (!p.product_id || !p.duration) {
+                toast.error("Please select both product and duration for each added product");
+                return;
+            }
+        }
+
+        const result = await convertWishList({
+            method: "POST",
+            url: `/api/admin/wish_list/${wishListToConvert.id}/convert`,
+            data: {
+                phone: convertForm.phone.trim(),
+                status_id: convertForm.status_id,
+                owner_name: convertForm.owner_name.trim() || undefined,
+                owner_phone: convertForm.owner_phone.trim() || undefined,
+                notes: convertForm.notes.trim() || undefined,
+                address: convertForm.address.trim(),
+                lat: Number(convertForm.lat),
+                lng: Number(convertForm.lng),
+                products: convertForm.products.filter((p) => p.product_id && p.duration),
+            },
+        });
+
+        if (result.success) {
+            toast.success("Wish list converted to visit successfully");
+            setWishListToConvert(null);
+            refresh?.();
+        } else {
+            toast.error("Failed to convert wish list to visit");
+        }
+    };
 
     // ---- Table Columns Definition ----
     const columns = [
         { accessorKey: "name", header: "Name" },
         { accessorKey: "description", header: "Description" },
+        {
+            accessorKey: "sales",
+            header: "Sales",
+            render: (row) => row.sales || "-",
+        },
+        {
+            accessorKey: "convert",
+            header: "Convert",
+            render: (row) => (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isConverting}
+                    className="h-8 text-xs gap-1.5 text-emerald-700 border-emerald-300 hover:bg-emerald-50"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenConvertModal(row);
+                    }}
+                >
+                    <ArrowRightLeft className="h-3.5 w-3.5" />
+                    To Visit
+                </Button>
+            ),
+        },
     ];
 
     // ---- Actions ----
@@ -81,6 +228,12 @@ const WishList = () => {
         }
     };
 
+    const mapFormAdapter = {
+        watch: (field) => (field === "address" ? convertForm.address : convertForm[field]),
+        setValue: (field, val) =>
+            setConvertForm((prev) => ({ ...prev, [field]: val })),
+    };
+
     return (
         <div className="container mx-auto py-10">
             {/* Controls Section: Search Bar */}
@@ -105,7 +258,7 @@ const WishList = () => {
                 isLoading={isLoading}
                 onEdit={handleEdit}
                 onDelete={handleDeleteClick}
-                search_auto={false} // إيقاف الفلترة المحلية ليعتمد كلياً على الـ Backend
+                search_auto={false}
             />
 
             {/* Pagination Controls */}
@@ -140,6 +293,278 @@ const WishList = () => {
                 onConfirm={handleDeleteConfirm}
                 loading={isDeleting}
             />
+
+            {/* Convert WishList to Visit Dialog */}
+            <Dialog
+                open={!!wishListToConvert}
+                onOpenChange={(open) => {
+                    if (!open) setWishListToConvert(null);
+                }}
+            >
+                <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <ArrowRightLeft className="h-5 w-5 text-emerald-600" />
+                            Convert Wish List to Visit
+                        </DialogTitle>
+                        <DialogDescription className="pt-1 text-sm text-gray-600">
+                            Enter the additional visit details for{" "}
+                            <span className="font-semibold text-gray-900">
+                                {wishListToConvert?.name}
+                            </span>
+                            {wishListToConvert?.sales ? (
+                                <>
+                                    {" "}
+                                    (Sales:{" "}
+                                    <span className="font-semibold text-gray-900">
+                                        {wishListToConvert.sales}
+                                    </span>
+                                    )
+                                </>
+                            ) : null}
+                            .
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <Label className="text-sm font-medium">Phone *</Label>
+                                <Input
+                                    type="tel"
+                                    placeholder="e.g. 01012345678"
+                                    value={convertForm.phone}
+                                    onChange={(e) =>
+                                        setConvertForm((prev) => ({
+                                            ...prev,
+                                            phone: e.target.value,
+                                        }))
+                                    }
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label className="text-sm font-medium">Visit Status *</Label>
+                                <select
+                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white h-10"
+                                    value={convertForm.status_id}
+                                    onChange={(e) =>
+                                        setConvertForm((prev) => ({
+                                            ...prev,
+                                            status_id: e.target.value,
+                                        }))
+                                    }
+                                >
+                                    <option value="">Select Visit Status</option>
+                                    {visitStatusList.map((st) => (
+                                        <option key={st.id} value={st.id}>
+                                            {st.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label className="text-sm font-medium">
+                                    Owner Name{" "}
+                                    <span className="text-xs text-muted-foreground font-normal">
+                                        (Optional)
+                                    </span>
+                                </Label>
+                                <Input
+                                    placeholder="Owner / Place Name"
+                                    value={convertForm.owner_name}
+                                    onChange={(e) =>
+                                        setConvertForm((prev) => ({
+                                            ...prev,
+                                            owner_name: e.target.value,
+                                        }))
+                                    }
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label className="text-sm font-medium">
+                                    Owner Phone{" "}
+                                    <span className="text-xs text-muted-foreground font-normal">
+                                        (Optional)
+                                    </span>
+                                </Label>
+                                <Input
+                                    type="tel"
+                                    placeholder="Owner / Place Phone"
+                                    value={convertForm.owner_phone}
+                                    onChange={(e) =>
+                                        setConvertForm((prev) => ({
+                                            ...prev,
+                                            owner_phone: e.target.value,
+                                        }))
+                                    }
+                                />
+                            </div>
+                        </div>
+
+                        {/* Multi-Products Section */}
+                        <div className="space-y-3 pt-2 border-t">
+                            <div className="flex items-center justify-between">
+                                <Label className="text-sm font-semibold">
+                                    Products (Optional)
+                                </Label>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleAddProduct}
+                                    className="flex items-center gap-1"
+                                >
+                                    <Plus className="h-4 w-4" /> Add Product
+                                </Button>
+                            </div>
+
+                            {convertForm.products.length === 0 && (
+                                <p className="text-xs text-muted-foreground">
+                                    No products added yet. Click &quot;Add Product&quot; to attach products to this visit.
+                                </p>
+                            )}
+
+                            <div className="space-y-2">
+                                {convertForm.products.map((item, idx) => {
+                                    const availableDurations = getDurationsForProduct(
+                                        productsList,
+                                        item.product_id
+                                    );
+                                    return (
+                                        <div
+                                            key={idx}
+                                            className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end bg-gray-50 p-2.5 rounded-md border"
+                                        >
+                                            <div className="sm:col-span-6 space-y-1">
+                                                <Label className="text-xs text-muted-foreground">
+                                                    Product *
+                                                </Label>
+                                                <select
+                                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white h-9"
+                                                    value={item.product_id}
+                                                    onChange={(e) =>
+                                                        handleProductChange(
+                                                            idx,
+                                                            "product_id",
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                >
+                                                    <option value="">Select Product</option>
+                                                    {productsList.map((p) => (
+                                                        <option key={p.id} value={p.id}>
+                                                            {p.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            <div className="sm:col-span-5 space-y-1">
+                                                <Label className="text-xs text-muted-foreground">
+                                                    Duration *
+                                                </Label>
+                                                <select
+                                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white h-9"
+                                                    value={item.duration}
+                                                    disabled={!item.product_id}
+                                                    onChange={(e) =>
+                                                        handleProductChange(
+                                                            idx,
+                                                            "duration",
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                >
+                                                    <option value="">Select Duration</option>
+                                                    {availableDurations.map((d) => (
+                                                        <option key={d} value={d}>
+                                                            {d}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            <div className="sm:col-span-1 flex justify-end">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleRemoveProduct(idx)}
+                                                    className="text-red-500 hover:text-red-700 hover:bg-red-50 h-9 w-9"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Notes */}
+                        <div className="space-y-1.5">
+                            <Label className="text-sm font-medium">Notes</Label>
+                            <Textarea
+                                placeholder="Any extra notes about the visit..."
+                                value={convertForm.notes}
+                                onChange={(e) =>
+                                    setConvertForm((prev) => ({
+                                        ...prev,
+                                        notes: e.target.value,
+                                    }))
+                                }
+                                className="min-h-[75px]"
+                            />
+                        </div>
+
+                        {/* Location / Map */}
+                        <div className="space-y-2 pt-2 border-t">
+                            <Label className="text-sm font-semibold">Location *</Label>
+                            <MapComponent
+                                selectedLocation={{
+                                    lat: convertForm.lat,
+                                    lng: convertForm.lng,
+                                }}
+                                setSelectedLocation={({ lat, lng }) =>
+                                    setConvertForm((prev) => ({ ...prev, lat, lng }))
+                                }
+                                locationName={convertForm.address}
+                                setLocationName={(addr) =>
+                                    setConvertForm((prev) => ({ ...prev, address: addr }))
+                                }
+                                form={mapFormAdapter}
+                                onMarkerDragEnd={(e) => {
+                                    const { lat, lng } = e.target.getLatLng();
+                                    setConvertForm((prev) => ({ ...prev, lat, lng }));
+                                }}
+                                isMapClickEnabled={true}
+                            />
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-3 border-t">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setWishListToConvert(null)}
+                                disabled={isConverting}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={handleConvertConfirm}
+                                disabled={isConverting}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                            >
+                                {isConverting ? "Converting..." : "Convert to Visit"}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

@@ -15,6 +15,21 @@ import { Controller, useFieldArray } from "react-hook-form";
 import { useGet } from "@/hooks/useGet";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 
+const MONTHS = [
+    { value: "1", label: "Jan" },
+    { value: "2", label: "Feb" },
+    { value: "3", label: "Mar" },
+    { value: "4", label: "Apr" },
+    { value: "5", label: "May" },
+    { value: "6", label: "Jun" },
+    { value: "7", label: "Jul" },
+    { value: "8", label: "Aug" },
+    { value: "9", label: "Sep" },
+    { value: "10", label: "Oct" },
+    { value: "11", label: "Nov" },
+    { value: "12", label: "Dec" },
+];
+
 const TargetAdd = () => {
     const { id } = useParams();
 
@@ -30,7 +45,7 @@ const TargetAdd = () => {
 
     const fetchedData = response?.data?.target || response?.target || response?.data || response;
 
-    if (id && isLoadingData) {
+    if ((id && isLoadingData) || isLoadingLists) {
         return (
             <div className="flex justify-center items-center min-h-[300px]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -50,16 +65,19 @@ const TargetAdd = () => {
                         name: fetchedData.name,
                         type: fetchedData.type,
                         // 💡 استخراج معرفات المستخدمين (user id) من الريسبونس عشان الفورم تقرأهم كـ مختارين
-                        sales: fetchedData.sales?.map((sale) => sale.user?.id) || [],
+                        sales: fetchedData.sales?.map((sale) => sale.user?.id || sale.user_id).filter(Boolean) || [],
                         items: fetchedData.items?.length > 0 
-                            ? fetchedData.items 
-                            : [{ year: new Date().getFullYear(), month: new Date().getMonth() + 1, number: 0 }],
+                            ? fetchedData.items.map((item) => ({
+                                ...item,
+                                month: String(item.month ?? 1),
+                            }))
+                            : [{ year: new Date().getFullYear(), month: String(new Date().getMonth() + 1), number: 0 }],
                     }
                     : {
                         name: "",
                         type: "visit", // القيمة الافتراضية
                         sales: [],
-                        items: [{ year: new Date().getFullYear(), month: new Date().getMonth() + 1, number: 0 }],
+                        items: [{ year: new Date().getFullYear(), month: String(new Date().getMonth() + 1), number: 0 }],
                     }
             }
             // تحضير البيانات لتطابق الـ Body المطلوب (JSON)
@@ -140,31 +158,57 @@ const TargetAdd = () => {
                                 {/* 3. Sales Field (List Select Style) */}
                                 <div className="space-y-2 sm:col-span-2">
                                     <Label className="text-sm font-medium">Assign to Sales *</Label>
-                                    {isLoadingLists ? (
-                                        <div className="text-sm text-muted-foreground animate-pulse">Loading sales lists...</div>
-                                    ) : (
-                                        // 💡 التعديل هنا: البوكس بقى له طول ثابت وScrollbar، والعناصر تحت بعض
-                                        <div className="max-h-[200px] overflow-y-auto flex flex-col gap-1 p-2 border border-input rounded-md bg-white shadow-sm">
-                                            {salesList.length > 0 ? (
-                                                salesList.map((sale) => (
-                                                    <label 
-                                                        key={sale.id} 
-                                                        className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-2 rounded-md transition-colors"
-                                                    >
-                                                        <input
-                                                            type="checkbox"
-                                                            value={sale.id}
-                                                            {...register("sales", { required: "Select at least one sales" })}
-                                                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-                                                        />
-                                                        <span className="text-sm font-medium text-gray-700">{sale.name}</span>
-                                                    </label>
-                                                ))
-                                            ) : (
-                                                <span className="text-sm text-muted-foreground p-2">No sales found.</span>
-                                            )}
-                                        </div>
-                                    )}
+                                    <Controller
+                                        name="sales"
+                                        control={control}
+                                        defaultValue={[]}
+                                        rules={{
+                                            validate: (val) =>
+                                                (Array.isArray(val) && val.length > 0) ||
+                                                "Select at least one sales",
+                                        }}
+                                        render={({ field }) => {
+                                            const selectedSales = Array.isArray(field.value)
+                                                ? field.value
+                                                : [field.value].filter(Boolean);
+
+                                            return (
+                                                <div className="max-h-[200px] overflow-y-auto flex flex-col gap-1 p-2 border border-input rounded-md bg-white shadow-sm">
+                                                    {salesList.length > 0 ? (
+                                                        salesList.map((sale) => {
+                                                            const isChecked = selectedSales.includes(sale.id);
+                                                            return (
+                                                                <label
+                                                                    key={sale.id}
+                                                                    className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-2 rounded-md transition-colors"
+                                                                >
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        value={sale.id}
+                                                                        checked={isChecked}
+                                                                        onChange={(e) => {
+                                                                            const nextSales = e.target.checked
+                                                                                ? [...selectedSales, sale.id]
+                                                                                : selectedSales.filter((sId) => sId !== sale.id);
+                                                                            field.onChange(nextSales);
+                                                                        }}
+                                                                        className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                                                                    />
+                                                                    <span className="text-sm font-medium text-gray-700">
+                                                                        {sale.name}
+                                                                    </span>
+                                                                </label>
+                                                            );
+                                                        })
+                                                    ) : (
+                                                        <span className="text-sm text-muted-foreground p-2">
+                                                            No sales found.
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            );
+                                        }}
+                                    />
                                     {errors.sales && (
                                         <span className="text-xs text-red-500">{errors.sales.message}</span>
                                     )}
@@ -182,7 +226,7 @@ const TargetAdd = () => {
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => append({ year: new Date().getFullYear(), month: 1, number: 0 })}
+                                    onClick={() => append({ year: new Date().getFullYear(), month: "1", number: 0 })}
                                     className="h-8"
                                 >
                                     <Plus className="w-4 h-4 mr-1" /> Add Item
@@ -198,18 +242,33 @@ const TargetAdd = () => {
                                                 type="number"
                                                 {...register(`items.${index}.year`, { required: true, valueAsNumber: true })}
                                                 placeholder="e.g. 2026"
-                                                className="h-9"
+                                                className="h-9 bg-white"
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label className="text-xs">Month (1-12)</Label>
-                                            <Input
-                                                type="number"
-                                                min="1"
-                                                max="12"
-                                                {...register(`items.${index}.month`, { required: true, valueAsNumber: true })}
-                                                placeholder="e.g. 7"
-                                                className="h-9"
+                                            <Label className="text-xs">Month</Label>
+                                            <Controller
+                                                name={`items.${index}.month`}
+                                                control={control}
+                                                defaultValue="1"
+                                                rules={{ required: true }}
+                                                render={({ field: monthField }) => (
+                                                    <Select
+                                                        onValueChange={monthField.onChange}
+                                                        value={String(monthField.value || "1")}
+                                                    >
+                                                        <SelectTrigger className="h-9 text-sm rounded-md bg-white">
+                                                            <SelectValue placeholder="Select month" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {MONTHS.map((m) => (
+                                                                <SelectItem key={m.value} value={m.value}>
+                                                                    {m.label}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                )}
                                             />
                                         </div>
                                         <div className="space-y-2">
@@ -218,7 +277,7 @@ const TargetAdd = () => {
                                                 type="number"
                                                 {...register(`items.${index}.number`, { required: true, valueAsNumber: true })}
                                                 placeholder="e.g. 100"
-                                                className="h-9"
+                                                className="h-9 bg-white"
                                             />
                                         </div>
                                         <div className="flex items-end pb-1">

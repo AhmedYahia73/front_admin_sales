@@ -207,8 +207,30 @@ const Visits = () => {
         { accessorKey: "phone", header: "Phone" },
         {
             accessorKey: "product",
-            header: "Product",
-            render: (row) => row.product || "-",
+            header: "Products",
+            render: (row) => {
+                if (Array.isArray(row.products) && row.products.length > 0) {
+                    return (
+                        <div className="flex flex-wrap gap-1">
+                            {row.products.map((p, idx) => (
+                                <span
+                                    key={idx}
+                                    className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-medium border border-blue-200"
+                                >
+                                    {p.product_name || p.product_id}
+                                    {p.duration ? ` (${p.duration})` : ""}
+                                </span>
+                            ))}
+                        </div>
+                    );
+                }
+                return row.product || "-";
+            },
+        },
+        {
+            accessorKey: "points",
+            header: "Points",
+            render: (row) => row.points ?? 0,
         },
         {
             accessorKey: "visit_status",

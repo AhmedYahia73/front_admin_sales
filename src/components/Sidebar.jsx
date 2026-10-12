@@ -3,12 +3,13 @@ import { NavLink } from 'react-router-dom';
 import {
   Heart, Calendar, Target, CheckCircle, User,
   TrendingUp, Shield, UserCog, LayoutDashboard, Menu,
-  FileText, ChevronDown, Clock, History, Package
+  FileText, ChevronDown, Clock, History, Package, Contact
 } from 'lucide-react';
 import { useGet } from '@/hooks/useGet';
 
 const menuItems = [
   { name: 'Dashboard', path: '/home', icon: <LayoutDashboard size={20} /> },
+  { name: 'Leads', path: '/leads', icon: <Contact size={20} />, dataKey: 'leadsCount' },
   { name: 'Visits', path: '/visits', icon: <Calendar size={20} />, dataKey: 'visitCount' },
   { name: 'Sales', path: '/sales', icon: <TrendingUp size={20} />, dataKey: 'salesCount' },
   { name: 'Sales Man', path: '/sales-man', icon: <User size={20} /> },
