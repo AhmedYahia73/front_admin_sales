@@ -46,10 +46,11 @@
     --radius-2xl: calc(var(--radius) * 1.8);
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
-    /* تم إزالة الألوان من هنا لمنع التعارض */
 }
 
-:root {
+/* Keeto Theme (Yellow - Default) */
+:root,
+:root[data-brand="keeto"] {
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
@@ -57,7 +58,6 @@
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
     
-    /* تم التعديل ليأخذ لون لوجو Keeto الأصفر المتناسق */
     --primary: hsl(54, 97%, 49%);
     --primary-foreground: oklch(0.145 0 0);
     --secondary: hsl(48, 96%, 89%);
@@ -80,7 +80,6 @@
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
     
-    /* اللون الأساسي للشريط الجانبي */
     --sidebar-primary: hsl(54, 97%, 49%);
     --sidebar-primary-foreground: oklch(0.145 0 0);
     
@@ -90,7 +89,22 @@
     --sidebar-ring: hsl(54, 97%, 49%);
 }
 
-.dark {
+/* Systego Theme (Red) */
+:root[data-brand="systego"] {
+    --primary: hsl(358, 79%, 51%);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: hsl(216, 2%, 51%);
+    --secondary-foreground: oklch(0.985 0 0);
+    --ring: oklch(0.708 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --sidebar-primary: hsl(358, 79%, 51%);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark,
+:root[data-brand="keeto"].dark,
+:root[data-brand="keeto"] .dark {
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
     --card: oklch(0.205 0 0);
@@ -98,7 +112,6 @@
     --popover: oklch(0.205 0 0);
     --popover-foreground: oklch(0.985 0 0);
     
-    /* الوضع الليلي للوجو Keeto */
     --primary: hsl(54, 97%, 49%);
     --primary-foreground: oklch(0.145 0 0);
     --secondary: hsl(48, 96%, 20%);
@@ -120,7 +133,6 @@
     --sidebar: oklch(0.205 0 0);
     --sidebar-foreground: oklch(0.985 0 0);
     
-    /* للوضع الليلي في الشريط الجانبي */
     --sidebar-primary: hsl(54, 97%, 49%);
     --sidebar-primary-foreground: oklch(0.145 0 0);
     
@@ -130,14 +142,27 @@
     --sidebar-ring: hsl(54, 97%, 49%);
 }
 
+:root[data-brand="systego"].dark,
+:root[data-brand="systego"] .dark {
+    --primary: hsl(358, 79%, 51%);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: hsl(216, 2%, 51%);
+    --secondary-foreground: oklch(0.985 0 0);
+    --ring: oklch(0.556 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --sidebar-primary: hsl(358, 79%, 51%);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-ring: oklch(0.556 0 0);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    }
+  }
   body {
     @apply bg-background text-foreground;
-    }
+  }
   html {
     @apply font-sans;
-    }
+  }
 }

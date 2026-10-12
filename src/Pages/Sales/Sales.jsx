@@ -6,6 +6,7 @@ import { useGet } from "@/hooks/useGet";
 import { useMutation } from "@/hooks/useMutation";
 import { MapPin, StickyNote, Search } from "lucide-react";
 import { toast } from "sonner";
+import { brandConfig } from "@/utils/brand";
 
 // استيراد مكونات الـ Dialog والمكونات الإضافية للزرار
 import { Button } from "@/components/ui/button";
@@ -468,12 +469,12 @@ const Visits = () => {
 
                 {/* Right Side: Total Sales Overview */}
                 <div className="shrink-0 flex items-stretch">
-                    <div className="bg-gradient-to-br from-yellow-400 to-amber-500 p-6 rounded-2xl shadow-lg flex flex-col items-center justify-center text-zinc-950 border border-yellow-300/60 transition-transform hover:scale-[1.02] min-h-full" style={{ width: 'calc(var(--spacing) * 55)' }}>
-                        <div className="bg-black/10 p-4 rounded-full mb-4 shadow-inner">
-                            <MapPin className="h-8 w-8 text-zinc-950" />
+                    <div className={brandConfig.overviewCardClass} style={{ width: 'calc(var(--spacing) * 55)' }}>
+                        <div className={brandConfig.overviewIconWrapperClass}>
+                            <MapPin className={brandConfig.overviewIconClass} />
                         </div>
                         <p className="text-5xl font-extrabold leading-none mb-2">{paginationData.total}</p>
-                        <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-900 text-center">Total Sales</h2>
+                        <h2 className={brandConfig.overviewLabelClass}>Total Sales</h2>
                     </div>
                 </div>
             </div>
