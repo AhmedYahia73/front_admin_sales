@@ -139,8 +139,14 @@ const TargetAdd = () => {
                                         rules={{ required: "Type is required" }}
                                         render={({ field }) => (
                                             <Select onValueChange={field.onChange} value={field.value}>
-                                                <SelectTrigger className="h-10 text-sm rounded-md">
-                                                    <SelectValue placeholder="Select type" />
+                                                <SelectTrigger className="w-full h-10 text-sm rounded-md">
+                                                    <SelectValue placeholder="Select type">
+                                                        {field.value === "sales"
+                                                            ? "Sales"
+                                                            : field.value === "points"
+                                                              ? "Points"
+                                                              : "Visit"}
+                                                    </SelectValue>
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     <SelectItem value="visit">Visit</SelectItem>
@@ -252,23 +258,31 @@ const TargetAdd = () => {
                                                 control={control}
                                                 defaultValue="1"
                                                 rules={{ required: true }}
-                                                render={({ field: monthField }) => (
-                                                    <Select
-                                                        onValueChange={monthField.onChange}
-                                                        value={String(monthField.value || "1")}
-                                                    >
-                                                        <SelectTrigger className="h-9 text-sm rounded-md bg-white">
-                                                            <SelectValue placeholder="Select month" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {MONTHS.map((m) => (
-                                                                <SelectItem key={m.value} value={m.value}>
-                                                                    {m.label}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                )}
+                                                render={({ field: monthField }) => {
+                                                    const selectedMonthVal = String(monthField.value || "1");
+                                                    const selectedMonthLabel =
+                                                        MONTHS.find((m) => m.value === selectedMonthVal)?.label || "Jan";
+                                                    return (
+                                                        <Select
+                                                            items={MONTHS}
+                                                            onValueChange={monthField.onChange}
+                                                            value={selectedMonthVal}
+                                                        >
+                                                            <SelectTrigger className="w-full h-9 text-sm rounded-md bg-white">
+                                                                <SelectValue placeholder="Select month">
+                                                                    {selectedMonthLabel}
+                                                                </SelectValue>
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {MONTHS.map((m) => (
+                                                                    <SelectItem key={m.value} value={m.value}>
+                                                                        {m.label}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    );
+                                                }}
                                             />
                                         </div>
                                         <div className="space-y-2">
