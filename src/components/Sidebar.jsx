@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import {
   Heart, Calendar, Target, CheckCircle, User,
   TrendingUp, Shield, UserCog, LayoutDashboard, Menu,
-  FileText, ChevronDown, Clock, History, Package, Contact
+  FileText, ChevronDown, Clock, History, Package, Contact, X
 } from 'lucide-react';
 import { useGet } from '@/hooks/useGet';
 import { brandConfig } from '@/utils/brand';
@@ -32,37 +32,68 @@ const menuItems = [
   }
 ];
 
-export const Sidebar = ({ isOpen, toggleSidebar }) => {
+export const Sidebar = ({ 
+  isOpen, 
+  toggleSidebar, 
+  isDesktopExpanded, 
+  isMobileOpen = false, 
+  closeMobileSidebar 
+}) => {
+  const isExpanded = isDesktopExpanded !== undefined ? isDesktopExpanded : isOpen;
   const { data, loading } = useGet('/api/admin/visits/report');
   
   // حالة لإدارة فتح وإغلاق قائمة Requests المنسدلة
   const [isRequestsOpen, setIsRequestsOpen] = useState(false);
 
   const toggleRequestsMenu = () => {
-    // لو الـ Sidebar مقفول وداس عليها، يفتح الـ Sidebar الأول
-    if (!isOpen) {
-      toggleSidebar();
+    if (!isExpanded) {
+      toggleSidebar?.();
       setIsRequestsOpen(true);
     } else {
       setIsRequestsOpen((prev) => !prev);
     }
   };
 
-  return (
-    <aside className={`h-screen bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col fixed left-0 top-0 transition-all duration-300 z-50 ${isOpen ? 'w-64' : 'w-20'}`}>
+  const handleNavClick = () => {
+    if (closeMobileSidebar) {
+      closeMobileSidebar();
+    }
+  };
 
-      {/* زر التبديل واللوجو */}
-      <div className="p-6 flex items-center justify-between cursor-pointer" onClick={toggleSidebar}>
-        {isOpen ? (
-          <h1 className="text-xl font-bold text-primary truncate">{brandConfig.appTitle}</h1>
-        ) : (
-          <div className="w-full flex justify-center text-primary">
+  return (
+    <aside 
+      className={`h-screen bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col fixed left-0 top-0 transition-all duration-300 z-50 ${
+        isMobileOpen ? 'translate-x-0 w-64 shadow-2xl' : '-translate-x-full'
+      } lg:translate-x-0 ${isExpanded ? 'lg:w-64' : 'lg:w-20'}`}
+    >
+      {/* Header: Brand title / toggle / mobile close */}
+      <div className="p-4 sm:p-5 flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 lg:border-b-0">
+        <div 
+          className="flex items-center gap-3 cursor-pointer flex-1 min-w-0" 
+          onClick={toggleSidebar}
+        >
+          <h1 className={`text-xl font-bold text-primary truncate ${isExpanded ? 'block' : 'block lg:hidden'}`}>
+            {brandConfig.appTitle}
+          </h1>
+          <div className={`w-full justify-center text-primary ${isExpanded ? 'hidden' : 'hidden lg:flex'}`}>
             <Menu size={24} />
           </div>
+        </div>
+
+        {/* Mobile Close Button */}
+        {closeMobileSidebar && (
+          <button
+            type="button"
+            onClick={closeMobileSidebar}
+            className="lg:hidden p-1.5 rounded-lg text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 transition-colors"
+            aria-label="Close Sidebar"
+          >
+            <X size={20} />
+          </button>
         )}
       </div>
 
-      <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 sm:px-4 py-2 space-y-1 overflow-y-auto">
         {menuItems.map((item) => {
           // في حالة وجود قائمة فرعية (Children)
           if (item.children) {
@@ -70,25 +101,24 @@ export const Sidebar = ({ isOpen, toggleSidebar }) => {
               <div key={item.name} className="flex flex-col">
                 {/* الزر الرئيسي لـ Requests */}
                 <button
+                  type="button"
                   onClick={toggleRequestsMenu}
-                  title={!isOpen ? item.name : ""}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  title={!isExpanded ? item.name : ""}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     {item.icon}
-                    {isOpen && <span className="font-medium">{item.name}</span>}
+                    <span className={`font-medium ${isExpanded ? 'block' : 'block lg:hidden'}`}>{item.name}</span>
                   </div>
-                  {isOpen && (
-                    <ChevronDown
-                      size={18}
-                      className={`transition-transform duration-200 ${isRequestsOpen ? 'rotate-180' : ''}`}
-                    />
-                  )}
+                  <ChevronDown
+                    size={18}
+                    className={`transition-transform duration-200 ${isRequestsOpen ? 'rotate-180' : ''} ${isExpanded ? 'block' : 'block lg:hidden'}`}
+                  />
                 </button>
 
                 {/* العناصر الفرعية داخل Requests */}
-                {isOpen && isRequestsOpen && (
-                  <div className="ml-4 pl-2 border-l-2 border-zinc-200 dark:border-zinc-800 space-y-1 mt-1">
+                {isRequestsOpen && (
+                  <div className={`ml-4 pl-2 border-l-2 border-zinc-200 dark:border-zinc-800 space-y-1 mt-1 ${isExpanded ? 'block' : 'block lg:hidden'}`}>
                     {item.children.map((subItem) => {
                       const badgeCount = subItem.dataKey && data?.data ? data.data[subItem.dataKey] : null;
 
@@ -96,6 +126,7 @@ export const Sidebar = ({ isOpen, toggleSidebar }) => {
                         <NavLink
                           key={subItem.name}
                           to={subItem.path}
+                          onClick={handleNavClick}
                           className={({ isActive }) =>
                             `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                               isActive
@@ -129,9 +160,10 @@ export const Sidebar = ({ isOpen, toggleSidebar }) => {
             <NavLink
               key={item.name}
               to={item.path}
-              title={!isOpen ? item.name : ""}
+              title={!isExpanded ? item.name : ""}
+              onClick={handleNavClick}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                `flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-colors ${
                   isActive
                     ? 'bg-primary/10 text-primary font-medium'
                     : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
@@ -140,17 +172,15 @@ export const Sidebar = ({ isOpen, toggleSidebar }) => {
             >
               {item.icon}
 
-              {isOpen && (
-                <div className="flex flex-1 items-center justify-between truncate">
-                  <span>{item.name}</span>
+              <div className={`flex flex-1 items-center justify-between truncate ${isExpanded ? 'flex' : 'flex lg:hidden'}`}>
+                <span>{item.name}</span>
 
-                  {badgeCount !== null && badgeCount !== undefined && (
-                    <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
-                      {loading ? '...' : badgeCount}
-                    </span>
-                  )}
-                </div>
-              )}
+                {badgeCount !== null && badgeCount !== undefined && (
+                  <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
+                    {loading ? '...' : badgeCount}
+                  </span>
+                )}
+              </div>
             </NavLink>
           );
         })}

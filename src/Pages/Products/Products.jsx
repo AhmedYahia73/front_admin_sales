@@ -53,7 +53,7 @@ const Products = () => {
     };
 
     return (
-        <div className="container mx-auto py-10">
+        <div className="w-full max-w-7xl mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6">
             <DataTable
                 title="Products Management"
                 onAdd={() => navigate("/products/add")}

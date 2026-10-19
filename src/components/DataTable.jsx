@@ -35,10 +35,10 @@ export const DataTable = ({
     <div className="space-y-4 w-full">
       {/* العنوان وزر الإضافة */}
       {(title || (showAdd && onAdd)) && (
-        <div className="flex justify-between items-center mb-4">
-          {title && <h2 className="text-xl font-bold text-gray-800">{title}</h2>}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+          {title && <h2 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-zinc-100">{title}</h2>}
           {showAdd && onAdd && (
-            <Button onClick={onAdd} className="gap-2">
+            <Button onClick={onAdd} className="gap-2 w-full sm:w-auto shadow-xs">
               <Plus className="h-4 w-4" /> Add
             </Button>
           )}
@@ -47,30 +47,31 @@ export const DataTable = ({
 
       {/* حقل البحث الداخلي (يظهر فقط إذا كان showSearchInput = true) */}
       {showSearchInput && (
-        <div className="relative w-full max-w-sm">
+        <div className="relative w-full sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <Input
             placeholder={searchPlaceholder}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 h-10 rounded-xl"
+            className="pl-9 h-10 rounded-xl w-full"
           />
         </div>
       )}
 
       {/* الجدول */}
-      <div className="rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
-        <Table>
-          <TableHeader className="bg-gray-50/50">
-            <TableRow>
-              {columns.map((col, index) => (
-                <TableHead key={col.accessorKey || index} className="font-semibold text-gray-700">
-                  {col.header}
-                </TableHead>
-              ))}
-              {hasActions && <TableHead className="text-center font-semibold text-gray-700">Actions</TableHead>}
-            </TableRow>
-          </TableHeader>
+      <div className="rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
+          <Table>
+            <TableHeader className="bg-gray-50/70 dark:bg-zinc-800/50">
+              <TableRow>
+                {columns.map((col, index) => (
+                  <TableHead key={col.accessorKey || index} className="font-semibold text-gray-700 dark:text-zinc-300 whitespace-nowrap px-3 sm:px-4">
+                    {col.header}
+                  </TableHead>
+                ))}
+                {hasActions && <TableHead className="text-center font-semibold text-gray-700 dark:text-zinc-300 whitespace-nowrap px-3 sm:px-4">Actions</TableHead>}
+              </TableRow>
+            </TableHeader>
 
           <TableBody>
             {isLoading ? (
@@ -134,6 +135,7 @@ export const DataTable = ({
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
     </div>
   );

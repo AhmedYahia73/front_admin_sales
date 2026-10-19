@@ -61,22 +61,22 @@ export default function Home() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50/50 p-6 md:p-10 space-y-8 animate-in fade-in duration-500">
+        <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto">
 
             {/* --- Header & Filters Section --- */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6 bg-white dark:bg-zinc-900 p-4 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-zinc-800 shadow-xs">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">
                         Sales Dashboard
                     </h1>
-                    <p className="text-sm text-slate-500 mt-1">
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-1">
                         follow up with your team performance
                     </p>
                 </div>
 
-                <div className="flex flex-wrap items-end gap-4">
-                    <div className="space-y-1.5">
-                        <Label htmlFor="from" className="text-xs font-medium text-slate-600 flex items-center gap-1">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 sm:gap-4 w-full lg:w-auto">
+                    <div className="space-y-1.5 flex-1 sm:flex-initial">
+                        <Label htmlFor="from" className="text-xs font-medium text-slate-600 dark:text-zinc-400 flex items-center gap-1">
                             <Calendar className="w-3.5 h-3.5 text-primary" /> From
                         </Label>
                         <Input
@@ -85,12 +85,12 @@ export default function Home() {
                             name="from"
                             value={dateFilter.from}
                             onChange={handleFilterChange}
-                            className="w-40 h-10 focus-visible:ring-primary/20 focus-visible:border-primary transition-all rounded-xl"
+                            className="w-full sm:w-40 h-10 focus-visible:ring-primary/20 focus-visible:border-primary transition-all rounded-xl"
                         />
                     </div>
 
-                    <div className="space-y-1.5">
-                        <Label htmlFor="to" className="text-xs font-medium text-slate-600 flex items-center gap-1">
+                    <div className="space-y-1.5 flex-1 sm:flex-initial">
+                        <Label htmlFor="to" className="text-xs font-medium text-slate-600 dark:text-zinc-400 flex items-center gap-1">
                             <Calendar className="w-3.5 h-3.5 text-primary" /> To
                         </Label>
                         <Input
@@ -99,7 +99,7 @@ export default function Home() {
                             name="to"
                             value={dateFilter.to}
                             onChange={handleFilterChange}
-                            className="w-40 h-10 focus-visible:ring-primary/20 focus-visible:border-primary transition-all rounded-xl"
+                            className="w-full sm:w-40 h-10 focus-visible:ring-primary/20 focus-visible:border-primary transition-all rounded-xl"
                         />
                     </div>
 
@@ -108,7 +108,7 @@ export default function Home() {
                         size="icon"
                         onClick={refresh}
                         disabled={loading}
-                        className="h-10 w-10 rounded-xl hover:bg-secondary/10 transition-all border-slate-200 text-secondary"
+                        className="h-10 w-full sm:w-10 rounded-xl hover:bg-secondary/10 transition-all border-slate-200 dark:border-zinc-700 text-secondary shrink-0"
                     >
                         <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
                     </Button>
@@ -129,10 +129,9 @@ export default function Home() {
                 <Button
                     asChild
                     size="lg"
-                    className="h-14 px-8 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group"
+                    className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 hover:scale-[1.01] active:scale-[0.98] group"
                 >
-                    {/* تم التعديل هنا لـ to بدلاً من href */}
-                    <Link to="/visits/add" className="flex items-center gap-3">
+                    <Link to="/visits/add" className="flex items-center justify-center gap-3">
                         <div className="bg-primary-foreground/20 p-1.5 rounded-lg group-hover:rotate-90 transition-transform duration-300">
                             <Plus className="w-5 h-5 text-primary-foreground" />
                         </div>
@@ -142,7 +141,7 @@ export default function Home() {
             </div>
 
             {/* --- Targets & Achievements (Progress Section) --- */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
 
                 {/* Visits Target */}
                 <Card className="border-slate-200/80 shadow-sm">
@@ -189,7 +188,7 @@ export default function Home() {
                 </Card>
 
                 {/* Points Target */}
-                <Card className="border-slate-200/80 shadow-sm">
+                <Card className="border-slate-200/80 shadow-sm sm:col-span-2 lg:col-span-1">
                     <CardContent className="pt-6">
                         <div className="flex justify-between items-start mb-4">
                             <div>
@@ -213,7 +212,7 @@ export default function Home() {
             </div>
 
             {/* --- Main Stats & Statuses --- */}
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
 
                 {/* Negotiation */}
                 <Card className="border-l-4 border-l-secondary shadow-sm hover:shadow-md transition-all">

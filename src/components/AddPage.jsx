@@ -128,15 +128,15 @@ const AddPage = ({
 
   return (
     <Card className="mx-auto w-full max-w-3xl shadow-lg border-none">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold tracking-tight text-capitalize">
+      <CardHeader className="space-y-1 p-4 sm:p-6">
+        <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight text-capitalize">
           {isEdit ? `${"Edit"} ${title}` : `${"Add"} ${title}`}
         </CardTitle>
-        <CardDescription>Please fill in the required fields below.</CardDescription>
+        <CardDescription className="text-xs sm:text-sm">Please fill in the required fields below.</CardDescription>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {fields.map((fieldItem) => (
               <div key={fieldItem.name} className="space-y-2">
                 <Label htmlFor={fieldItem.name}>
@@ -445,7 +445,7 @@ const AddPage = ({
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full md:w-32"
+              className="w-full sm:w-auto sm:min-w-[120px]"
             >
               {isLoading ? (
                 <>

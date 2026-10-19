@@ -110,18 +110,18 @@ const Leader = () => {
     ];
 
     return (
-        <div className="container mx-auto py-10">
+        <div className="w-full max-w-7xl mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6">
             {/* Controls Section: Filter & Search Bar */}
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+            <div className="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-zinc-900 p-3.5 sm:p-4 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-xs">
                 
-                {/* 1. Target Filter (مأخوذ من كودك الأصلي بالضبط) */}
-                <div className="flex items-center gap-3">
-                    <label htmlFor="leader-filter" className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+                {/* 1. Target Filter */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                    <label htmlFor="leader-filter" className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-zinc-300 whitespace-nowrap">
                         Filter by Target:
                     </label>
                     <select
                         id="leader-filter"
-                        className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[200px]"
+                        className="border border-gray-300 dark:border-zinc-700 rounded-md px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 w-full sm:w-auto sm:min-w-[200px]"
                         value={selectedleaderFilter}
                         onChange={handleFilterChange}
                     >
@@ -135,12 +135,12 @@ const Leader = () => {
                 </div>
 
                 {/* 2. Search Input */}
-                <div className="flex items-center gap-2 relative min-w-[280px]">
-                    <Search className="absolute left-3 h-4 w-4 text-gray-400" />
+                <div className="relative w-full sm:max-w-md">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                         type="text"
                         placeholder="Search leaders by name, email, or phone..."
-                        className="pl-9"
+                        className="pl-9 h-10 w-full text-xs sm:text-sm"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -149,7 +149,7 @@ const Leader = () => {
 
             {/* Table Section */}
             <DataTable
-                title="leader Management"
+                title="Leader Management"
                 onAdd={() => navigate("/leader/add")}
                 showActions={true}
                 onEdit={(row) => navigate(`/leader/${row.id}/edit`)}
@@ -161,17 +161,18 @@ const Leader = () => {
             />
 
             {/* Pagination Controls */}
-            <div className="flex items-center justify-between mt-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                <div className="text-sm text-gray-600">
-                    Showing page <span className="font-semibold">{paginationData.page}</span> of{" "}
-                    <span className="font-semibold">{paginationData.totalPages || 1}</span> (Total: {paginationData.total})
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 bg-white dark:bg-zinc-900 p-3 sm:p-4 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-xs">
+                <div className="text-xs sm:text-sm text-gray-600 dark:text-zinc-400 text-center sm:text-left">
+                    Showing page <span className="font-semibold text-zinc-900 dark:text-zinc-100">{paginationData.page}</span> of{" "}
+                    <span className="font-semibold text-zinc-900 dark:text-zinc-100">{paginationData.totalPages || 1}</span> (Total: {paginationData.total})
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full sm:w-auto justify-center">
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setPage((old) => Math.max(old - 1, 1))}
                         disabled={page === 1 || isLoading}
+                        className="flex-1 sm:flex-initial"
                     >
                         Previous
                     </Button>
@@ -180,6 +181,7 @@ const Leader = () => {
                         size="sm"
                         onClick={() => setPage((old) => Math.min(old + 1, paginationData.totalPages))}
                         disabled={page >= paginationData.totalPages || isLoading}
+                        className="flex-1 sm:flex-initial"
                     >
                         Next
                     </Button>

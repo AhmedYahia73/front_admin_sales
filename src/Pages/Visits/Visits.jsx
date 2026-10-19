@@ -400,19 +400,19 @@ const Visits = () => {
     ];
 
     return (
-        <div className="container mx-auto py-10">
-            <div className="flex flex-col xl:flex-row gap-6 mb-6">
+        <div className="w-full max-w-7xl mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6">
+            <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 mb-2">
                 {/* Left Side: Filters */}
-                <div className="flex-1 flex flex-col gap-4">
+                <div className="flex-1 flex flex-col gap-3 sm:gap-4 min-w-0">
                     {/* Year & Month Filter */}
-                    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col gap-4">
-                        <div className="flex items-center gap-3">
-                            <label htmlFor="year-filter" className="text-sm font-semibold text-gray-700">
+                    <div className="bg-white dark:bg-zinc-900 p-3.5 sm:p-4 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-xs flex flex-col gap-3 sm:gap-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                            <label htmlFor="year-filter" className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-zinc-300">
                                 Filter by Year:
                             </label>
                             <select
                                 id="year-filter"
-                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[120px]"
+                                className="border border-gray-300 dark:border-zinc-700 rounded-md px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 w-full sm:w-auto sm:min-w-[130px]"
                                 value={selectedYear}
                                 onChange={(e) => {
                                     setSelectedYear(e.target.value);
@@ -425,9 +425,10 @@ const Visits = () => {
                             </select>
                         </div>
                         
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
                             <button
-                                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${selectedMonths.length === 0 ? "bg-primary text-primary-foreground font-semibold shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"}`}
+                                type="button"
+                                className={`px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm rounded-md transition-colors ${selectedMonths.length === 0 ? "bg-primary text-primary-foreground font-semibold shadow-xs" : "bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 hover:bg-gray-200 dark:hover:bg-zinc-700 border border-gray-200 dark:border-zinc-700"}`}
                                 onClick={() => { setSelectedMonths([]); setPage(1); }}
                             >
                                 All Months
@@ -436,8 +437,9 @@ const Visits = () => {
                                 const isSelected = selectedMonths.includes(m.value);
                                 return (
                                     <button
+                                        type="button"
                                         key={m.value}
-                                        className={`px-3 py-1.5 text-sm rounded-md transition-colors ${isSelected ? "bg-primary text-primary-foreground font-semibold shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"}`}
+                                        className={`px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm rounded-md transition-colors ${isSelected ? "bg-primary text-primary-foreground font-semibold shadow-xs" : "bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 hover:bg-gray-200 dark:hover:bg-zinc-700 border border-gray-200 dark:border-zinc-700"}`}
                                         onClick={() => { 
                                             if (isSelected) {
                                                 setSelectedMonths(selectedMonths.filter(x => x !== m.value));
@@ -455,15 +457,15 @@ const Visits = () => {
                     </div>
 
                     {/* Controls Section: Filter & Search */}
-                    <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 bg-white dark:bg-zinc-900 p-3.5 sm:p-4 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-xs">
                         {/* Sales Filter */}
-                        <div className="flex items-center gap-3">
-                            <label htmlFor="sales-filter" className="text-sm font-semibold text-gray-700">
+                        <div className="flex flex-col gap-1.5">
+                            <label htmlFor="sales-filter" className="text-xs font-semibold text-gray-700 dark:text-zinc-300">
                                 Filter by Sales:
                             </label>
                             <select
                                 id="sales-filter"
-                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[200px]"
+                                className="border border-gray-300 dark:border-zinc-700 rounded-md px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 w-full"
                                 value={selectedSalesFilter}
                                 onChange={handleFilterChange}
                             >
@@ -477,13 +479,13 @@ const Visits = () => {
                         </div>
 
                         {/* Status Filter */}
-                        <div className="flex items-center gap-3">
-                            <label htmlFor="status-filter" className="text-sm font-semibold text-gray-700">
+                        <div className="flex flex-col gap-1.5">
+                            <label htmlFor="status-filter" className="text-xs font-semibold text-gray-700 dark:text-zinc-300">
                                 Filter by Status:
                             </label>
                             <select
                                 id="status-filter"
-                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[200px]"
+                                className="border border-gray-300 dark:border-zinc-700 rounded-md px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 w-full"
                                 value={selectedStatusFilter}
                                 onChange={handleStatusFilterChange}
                             >
@@ -497,26 +499,32 @@ const Visits = () => {
                         </div>
 
                         {/* Search Input (Backend Search) */}
-                        <div className="flex items-center gap-2 relative min-w-[250px]">
-                            <Search className="absolute left-3 h-4 w-4 text-gray-400" />
-                            <Input
-                                type="text"
-                                placeholder="Search visits by name, phone or address..."
-                                className="pl-9"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
+                        <div className="flex flex-col gap-1.5 sm:col-span-2 lg:col-span-1">
+                            <label htmlFor="search-filter" className="text-xs font-semibold text-gray-700 dark:text-zinc-300">
+                                Search Visits:
+                            </label>
+                            <div className="relative w-full">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                    id="search-filter"
+                                    type="text"
+                                    placeholder="Search by name, phone or address..."
+                                    className="pl-9 h-9.5 text-xs sm:text-sm w-full"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Right Side: Total Visits Overview */}
-                <div className="shrink-0 flex items-stretch">
-                    <div className={brandConfig.overviewCardClass} style={{ width: 'calc(var(--spacing) * 55)' }}>
+                <div className="w-full xl:w-60 shrink-0 flex items-stretch">
+                    <div className={`${brandConfig.overviewCardClass} w-full`}>
                         <div className={brandConfig.overviewIconWrapperClass}>
                             <MapPin className={brandConfig.overviewIconClass} />
                         </div>
-                        <p className="text-5xl font-extrabold leading-none mb-2">{paginationData.total}</p>
+                        <p className="text-4xl sm:text-5xl font-extrabold leading-none mb-2">{paginationData.total}</p>
                         <h2 className={brandConfig.overviewLabelClass}>Total Visits</h2>
                     </div>
                 </div>
@@ -534,17 +542,18 @@ const Visits = () => {
             />
 
             {/* Pagination Controls */}
-            <div className="flex items-center justify-between mt-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                <div className="text-sm text-gray-600">
-                    Showing page <span className="font-semibold">{paginationData.page}</span> of{" "}
-                    <span className="font-semibold">{paginationData.totalPages || 1}</span> (Total: {paginationData.total})
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 bg-white dark:bg-zinc-900 p-3 sm:p-4 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-xs">
+                <div className="text-xs sm:text-sm text-gray-600 dark:text-zinc-400 text-center sm:text-left">
+                    Showing page <span className="font-semibold text-zinc-900 dark:text-zinc-100">{paginationData.page}</span> of{" "}
+                    <span className="font-semibold text-zinc-900 dark:text-zinc-100">{paginationData.totalPages || 1}</span> (Total: {paginationData.total})
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full sm:w-auto justify-center">
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setPage((old) => Math.max(old - 1, 1))}
                         disabled={page === 1 || isLoading}
+                        className="flex-1 sm:flex-initial"
                     >
                         Previous
                     </Button>
@@ -553,6 +562,7 @@ const Visits = () => {
                         size="sm"
                         onClick={() => setPage((old) => Math.min(old + 1, paginationData.totalPages))}
                         disabled={page >= paginationData.totalPages || isLoading}
+                        className="flex-1 sm:flex-initial"
                     >
                         Next
                     </Button>

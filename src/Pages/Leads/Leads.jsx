@@ -201,18 +201,18 @@ const Leads = () => {
   ];
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-        <div className="flex items-center gap-3">
+    <div className="w-full max-w-7xl mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-zinc-900 p-3.5 sm:p-4 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <label
             htmlFor="sales-filter"
-            className="text-sm font-semibold text-gray-700"
+            className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-zinc-300"
           >
             Filter by Sales:
           </label>
           <select
             id="sales-filter"
-            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[200px]"
+            className="border border-gray-300 dark:border-zinc-700 rounded-md px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 w-full sm:w-auto sm:min-w-[200px]"
             value={selectedSalesFilter}
             onChange={(e) => setSelectedSalesFilter(e.target.value)}
           >
