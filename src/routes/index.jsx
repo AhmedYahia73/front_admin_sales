@@ -2,6 +2,7 @@ import React from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { MainLayout } from '@/layouts/MainLayout';
 import { isAuthenticated, setAuthToken } from '@/utils/auth';
+import { setProjectBrand, applyBrandTheme } from '@/utils/brand';
 import { LoginPage } from '@/components/LoginPage';
 import Home from '@/Pages/Home';
 import Visits from '@/Pages/Visits/Visits';
@@ -48,6 +49,17 @@ const ProtectedRoute = ({ children }) => {
 
       setAuthToken(ssoToken);
       localStorage.setItem('user', JSON.stringify(user));
+
+      if (user.project_id) {
+        setProjectBrand({
+          id: user.project_id,
+          name: user.project_name || '',
+          logo: user.project_logo || '',
+          design: user.project_design || 'design 1',
+        });
+      } else {
+        applyBrandTheme();
+      }
 
       const cleanUrl = window.location.pathname;
       window.history.replaceState({}, document.title, cleanUrl);
