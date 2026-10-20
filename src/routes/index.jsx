@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { MainLayout } from '@/layouts/MainLayout';
-import { isAuthenticated } from '@/utils/auth';
+import { isAuthenticated, setAuthToken } from '@/utils/auth';
 import { LoginPage } from '@/components/LoginPage';
 import Home from '@/Pages/Home';
 import Visits from '@/Pages/Visits/Visits';
@@ -30,6 +30,32 @@ import HistoryRequests from '@/Pages/StatusRequests/HistoryRequests';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
+  // 🔐 Check for SSO Token in URL query params
+  const urlParams = new URLSearchParams(window.location.search);
+  const ssoToken = urlParams.get('token');
+
+  if (ssoToken) {
+    try {
+      const base64Url = ssoToken.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      const user = JSON.parse(jsonPayload);
+
+      setAuthToken(ssoToken);
+      localStorage.setItem('user', JSON.stringify(user));
+
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    } catch (e) {
+      console.error('Failed to parse SSO token:', e);
+    }
+  }
+
   if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
   }
