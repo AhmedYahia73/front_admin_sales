@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Loader2, Eye, EyeOff, Building2 } from 'lucide-react';
-import { setAuthToken } from '@/utils/auth';
+import { setAuthToken, isAuthenticated, initSsoToken } from '@/utils/auth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useMutation } from '@/hooks/useMutation';
@@ -19,6 +19,14 @@ export const LoginPage = () => {
   const [loadingProjects, setLoadingProjects] = useState(true);
 
   const { mutate, loading } = useMutation();
+
+  // التحقق الفوري إذا كان هناك توكن قادم من الرابط أو جلسة نشطة
+  useEffect(() => {
+    initSsoToken();
+    if (isAuthenticated()) {
+      navigate('/home', { replace: true });
+    }
+  }, [navigate]);
 
   // جلب مشاريع المبيعات المتاحة للاختيار
   useEffect(() => {
