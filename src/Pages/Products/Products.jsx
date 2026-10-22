@@ -10,7 +10,7 @@ const Products = () => {
     const navigate = useNavigate();
 
     // ---- Get Products Data ----
-    const { data: response, loading: isLoading, refresh } = useGet("/api/admin/products");
+    const { data: response, loading: isLoading, refresh } = useGet("/api/admin/sales/products");
 
     // Extract array from Response
     const productsList = response?.data?.allProducts || response?.allProducts || response?.data?.products || response?.products || response?.data || [];
@@ -26,7 +26,12 @@ const Products = () => {
 
     // ---- 1. Edit ----
     const handleEdit = (row) => {
-        navigate(`/products/${row.id}/edit/`, { state: row });
+        const prodId = row?.id || row?._id;
+        if (!prodId) {
+            toast.error("Product has an invalid ID");
+            return;
+        }
+        navigate(`/products/${prodId}/edit`, { state: row });
     };
 
     // ---- 2. Delete ----
@@ -37,9 +42,10 @@ const Products = () => {
     const handleDeleteConfirm = async () => {
         if (!productToDelete) return;
 
+        const prodId = productToDelete.id || productToDelete._id || "";
         const result = await deleteProduct({
             method: "DELETE",
-            url: `/api/admin/products/${productToDelete.id}`,
+            url: prodId ? `/api/admin/sales/products/${prodId}` : `/api/admin/sales/products`,
             showToast: false,
         });
 
