@@ -103,7 +103,7 @@ const Visits = () => {
 
     // ---- Get Visits Data ----
     const { data: response, loading: isLoading, refresh } = useGet(visitsApiUrl);
-    const visits = response?.data?.allVisits || [];
+    const visits = response?.data?.allVisits || response?.allVisits || response?.data || (Array.isArray(response) ? response : []);
     
     // استخراج بيانات الـ Pagination من الـ Response
     const paginationData = response?.data?.pagination || response?.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 };
