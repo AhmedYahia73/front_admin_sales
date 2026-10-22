@@ -35,12 +35,12 @@ const TargetAdd = () => {
 
     // 1. جلب بيانات التارجت في حالة التعديل
     const { data: response, loading: isLoadingData } = useGet(
-        id ? `/api/admin/target/${id}` : null,
+        id ? `/api/admin/sales/target/${id}` : null,
         Boolean(id)
     );
 
     // 2. جلب قوائم المبيعات (Sales) عشان نعرضها كخيارات
-    const { data: listsResponse, loading: isLoadingLists } = useGet("/api/admin/target/sales/lists");
+    const { data: listsResponse, loading: isLoadingLists } = useGet("/api/admin/sales/target/sales/lists");
     const salesList = listsResponse?.data?.sales || listsResponse?.sales || [];
 
     const fetchedData = response?.data?.target || response?.target || response?.data || response;
@@ -56,7 +56,7 @@ const TargetAdd = () => {
     return (
         <AddPage
             title="Target"
-            apiUrl="/api/admin/target"
+            apiUrl="/api/admin/sales/target"
             method={id ? "PUT" : "POST"}
             initialData={
                 id && fetchedData
@@ -65,7 +65,11 @@ const TargetAdd = () => {
                         name: fetchedData.name,
                         type: fetchedData.type,
                         // 💡 استخراج معرفات المستخدمين (user id) من الريسبونس عشان الفورم تقرأهم كـ مختارين
-                        sales: fetchedData.sales?.map((sale) => sale.user?.id || sale.user_id).filter(Boolean) || [],
+                        sales: fetchedData.sales?.map((sale) => 
+                            typeof sale === "string" 
+                                ? sale 
+                                : (sale.id || sale.user_id || sale.user?.id)
+                        ).filter(Boolean) || [],
                         items: fetchedData.items?.length > 0 
                             ? fetchedData.items.map((item) => ({
                                 ...item,
